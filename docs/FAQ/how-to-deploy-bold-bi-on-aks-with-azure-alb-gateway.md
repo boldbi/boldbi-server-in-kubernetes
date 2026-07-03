@@ -18,7 +18,7 @@ This guide explains how to deploy **Bold BI** on an **Azure Kubernetes Service (
 * This step enables the ALB ingress controller, which is essential for routing traffic to your Bold BI application.
 
 ## 2. Azure Storage Account
-* Set up an Azure Files storage account for persistent storage in AKS. This is required for Bold BI's data persistence. Follow the guidelines in the Bold BI Kubernetes repository. [Documentation Link](https://github.com/boldbi/boldbi-kubernetes/blob/main/helm/docs/pre-requisites.md#aks-file-storage)
+* Set up an Azure Files storage account for persistent storage in AKS. This is required for Bold BI's data persistence. Follow the guidelines in the Bold BI Kubernetes repository. [Documentation Link](https://github.com/boldbi/boldbi-server-in-kubernetes/blob/main/helm/docs/pre-requisites.md#aks-file-storage)
 
 * Note the storage account details (e.g., account name, file share name, and access key), as they will be used later for persistent volumes.
 
@@ -62,7 +62,7 @@ This should list the nodes in your AKS cluster.
 ## 2. Download the Azure ALB Pre-Config File
 Download the pre-configuration YAML file for Azure ALB integration with Bold BI. Use the following command or download directly from the URL
 ```sh
-curl -O https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/refs/heads/main/deploy/azure-alb-pre-config.yaml
+curl -O https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/refs/heads/main/deploy/azure-alb-pre-config.yaml
 ```
 
 ## 3. Create Namespace
@@ -132,7 +132,7 @@ kubectl get gateway -n <namespace>
 ## 8. Download Bold BI AKS Helm Values File
 Download the custom values file for the Bold BI Helm chart tailored for AKS.
 ```sh
-curl -O https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/main/helm/custom-values/aks-values.yaml
+curl -O https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/helm/custom-values/aks-values.yaml
 ```
 This file contains overrides for the default Helm chart values.
 

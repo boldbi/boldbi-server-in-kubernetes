@@ -36,10 +36,10 @@ else
 		if [ ! -d "boldbi_7-2" ]; then mkdir boldbi_7-2; fi
 		
 		# Downloading deployment files.."
-		if [ ! -f "boldbi_7-2/service.yaml" ]; then curl -o boldbi_7-2/service.yaml https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/v7.2.8/deploy/service.yaml; fi
-		if [ ! -f "boldbi_7-2/hpa.yaml" ]; then curl -o boldbi_7-2/hpa.yaml https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/v7.2.8/deploy/hpa.yaml; fi
-		if [ ! -f "boldbi_7-2/deployment.yaml" ]; then curl -o boldbi_7-2/deployment.yaml https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/v7.2.8/deploy/deployment.yaml; fi
-		if [ ! -f "boldbi_7-2/ingress.yaml" ]; then curl -o boldbi_7-2/ingress.yaml https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/v7.2.8/deploy/ingress.yaml; fi
+		if [ ! -f "boldbi_7-2/service.yaml" ]; then curl -o boldbi_7-2/service.yaml https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v7.2.8/deploy/service.yaml; fi
+		if [ ! -f "boldbi_7-2/hpa.yaml" ]; then curl -o boldbi_7-2/hpa.yaml https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v7.2.8/deploy/hpa.yaml; fi
+		if [ ! -f "boldbi_7-2/deployment.yaml" ]; then curl -o boldbi_7-2/deployment.yaml https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v7.2.8/deploy/deployment.yaml; fi
+		if [ ! -f "boldbi_7-2/ingress.yaml" ]; then curl -o boldbi_7-2/ingress.yaml https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v7.2.8/deploy/ingress.yaml; fi
 
 		# deployment file changes changes
 		sed -i "s/<namespace>/$namespace/g" boldbi_7-2/service.yaml

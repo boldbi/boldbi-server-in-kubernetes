@@ -45,9 +45,9 @@ else
 		if [ ! -d "boldbi_4-2" ]; then mkdir boldbi_4-2; fi
 		
 		# Downloading deployment files.."
-		if [ ! -f "boldbi_4-2/secrets.yaml" ]; then curl -o boldbi_4-2/secrets.yaml https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/v4.2.69/upgrade/secrets.yaml; fi
-		if [ ! -f "boldbi_4-2/log4net_config.yaml" ]; then curl -o boldbi_4-2/log4net_config.yaml https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/v4.2.69/upgrade/log4net_config.yaml; fi
-		if [ ! -f "boldbi_4-2/deployment.yaml" ]; then curl -o boldbi_4-2/deployment.yaml https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/v4.2.69/upgrade/deployment.yaml; fi
+		if [ ! -f "boldbi_4-2/secrets.yaml" ]; then curl -o boldbi_4-2/secrets.yaml https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v4.2.69/upgrade/secrets.yaml; fi
+		if [ ! -f "boldbi_4-2/log4net_config.yaml" ]; then curl -o boldbi_4-2/log4net_config.yaml https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v4.2.69/upgrade/log4net_config.yaml; fi
+		if [ ! -f "boldbi_4-2/deployment.yaml" ]; then curl -o boldbi_4-2/deployment.yaml https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v4.2.69/upgrade/deployment.yaml; fi
 		
 		# deployment file changes changes
 		sed -i "s/<namespace>/$namespace/g" boldbi_4-2/secrets.yaml

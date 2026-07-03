@@ -16,7 +16,7 @@ This chart installs both [Bold BI](https://www.boldbi.com/) and [Bold Reports](h
 1. Add the Bold BI helm repository
 
 ```console
-helm repo add boldbi https://boldbi.github.io/boldbi-kubernetes
+helm repo add boldbi https://boldbi.github.io/boldbi-server-in-kubernetes
 helm repo update
 ```
 
@@ -26,7 +26,7 @@ helm repo update
 helm search repo boldbi
 
 NAME            CHART VERSION   APP VERSION     DESCRIPTION
-boldbi/bold-common   16.1.70           16.1.70          Embed powerful analytics inside your apps and t...
+boldbi/bold-common   16.1.80           16.1.80          Embed powerful analytics inside your apps and t...
 ```
 
 _See [helm repo](https://helm.sh/docs/helm/helm_repo/) for command documentation._
@@ -35,11 +35,11 @@ _See [helm repo](https://helm.sh/docs/helm/helm_repo/) for command documentation
 
 For Helm chart, you'll need to craft a `values.yaml`.
 
-* For `GKE` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/main/helm/custom-values/common-gke-values.yaml).
-* For `EKS` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/main/helm/custom-values/common-eks-values.yaml).
-* For `AKS` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/main/helm/custom-values/common-aks-values.yaml).
-* For `ACK` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/main/helm/custom-values/common-ack-values.yaml).
-* For `OKE` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/main/helm/custom-values/common-oke-values.yaml).
+* For `GKE` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/helm/custom-values/common-gke-values.yaml).
+* For `EKS` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/helm/custom-values/common-eks-values.yaml).
+* For `AKS` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/helm/custom-values/common-aks-values.yaml).
+* For `ACK` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/helm/custom-values/common-ack-values.yaml).
+* For `OKE` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/helm/custom-values/common-oke-values.yaml).
 
 <br/>
 

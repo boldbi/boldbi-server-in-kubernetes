@@ -8,7 +8,7 @@
 </a>
 </br></br>
 
-[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/boldbi/boldbi-kubernetes?sort=semver)](https://github.com/boldbi/boldbi-kubernetes/releases/latest)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/boldbi/boldbi-server-in-kubernetes?sort=semver)](https://github.com/boldbi/boldbi-server-in-kubernetes/releases/latest)
 [![Documentation](https://img.shields.io/badge/docs-help.boldbi.com-blue.svg)](https://help.boldbi.com/embedded-bi?utm_source=github&utm_medium=backlinks)
 [![File Issues](https://img.shields.io/badge/file_issues-boldbi_support-blue.svg)](https://www.boldbi.com/support?utm_source=github&utm_medium=backlinks)
 
@@ -70,18 +70,18 @@ It is the image user's responsibility to ensure that any use of this image compl
 
 ## FAQ
 
-[How to auto deploy Bold BI in Kubernetes cluster?](https://github.com/boldbi/boldbi-kubernetes/blob/main/docs/bold-bi-auto-deployment.md)
+[How to auto deploy Bold BI in Kubernetes cluster?](https://github.com/boldbi/boldbi-server-in-kubernetes/blob/main/docs/bold-bi-auto-deployment.md)
 
-[How to manually configure SSL using cert manager in Bold BI Kubernetes deployment?](https://github.com/boldbi/boldbi-kubernetes/blob/main//docs/FAQ/how-to-manually-configure-ssl-using-cert-manger-in-bold-bi-kubernetes-deployment.md)
+[How to manually configure SSL using cert manager in Bold BI Kubernetes deployment?](https://github.com/boldbi/boldbi-server-in-kubernetes/blob/main//docs/FAQ/how-to-manually-configure-ssl-using-cert-manger-in-bold-bi-kubernetes-deployment.md)
 
-[How to deploy Bold BI in EKS using Network Load Balancer (NLB) with SSL certificate from AWS Certificate Manager (ACM)?](https://github.com/boldbi/boldbi-kubernetes/blob/main//docs/FAQ/how-deploy-bold-bi-in-eks-using-network-load-balancer-with-ssl-certificate-from-acm.md)
+[How to deploy Bold BI in EKS using Network Load Balancer (NLB) with SSL certificate from AWS Certificate Manager (ACM)?](https://github.com/boldbi/boldbi-server-in-kubernetes/blob/main//docs/FAQ/how-deploy-bold-bi-in-eks-using-network-load-balancer-with-ssl-certificate-from-acm.md)
 
-[How to deploy Bold BI in Elastic Kubernetes Services (EKS) using Application Load Balancer (ALB)?](https://github.com/boldbi/boldbi-kubernetes/blob/main//docs/FAQ/how-to-deploy-bold-bi-in-eks-using-application-load-balancer.md)
+[How to deploy Bold BI in Elastic Kubernetes Services (EKS) using Application Load Balancer (ALB)?](https://github.com/boldbi/boldbi-server-in-kubernetes/blob/main//docs/FAQ/how-to-deploy-bold-bi-in-eks-using-application-load-balancer.md)
 
 [How to deploy Bold BI in Alibaba Cloud Kubernetes (ACK) Cluster?](docs/FAQ/how-to-deploy-bold-bi-in-an-ack-cluster.md)
 
 [How to deploy Bold BI and Bold Reports in Alibaba Cloud Kubernetes (ACK) Cluster?](docs/FAQ/how-to-deploy-bold-bi-and-bold-reports-in-an-ack-cluster.md)
 
-[How to upgrade Bold BI using kubectl?](https://github.com/boldbi/boldbi-kubernetes/blob/Adding-upgrade-doc-in-faq/upgrade/upgrade.md)
+[How to upgrade Bold BI using kubectl?](https://github.com/boldbi/boldbi-server-in-kubernetes/blob/Adding-upgrade-doc-in-faq/upgrade/upgrade.md)
 
-[How to migrate the file share from Azure SMB Fileshare to NFS Fileshare?](https://github.com/boldbi/boldbi-kubernetes/blob/main/docs/FAQ/how-to-migrate-app_data-from-azure-smb-fileshare-to-nfs-fileshare.md)
+[How to migrate the file share from Azure SMB Fileshare to NFS Fileshare?](https://github.com/boldbi/boldbi-server-in-kubernetes/blob/main/docs/FAQ/how-to-migrate-app_data-from-azure-smb-fileshare-to-nfs-fileshare.md)

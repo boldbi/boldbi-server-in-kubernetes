@@ -141,7 +141,7 @@ The section explains how to deploy [Bold BI](https://www.boldbi.com/) in an EKS 
 
 10. If you have a DNS to map with the application, proceed to the next steps, otherwise, skip to **Step 13**. 
 
-11. Download the `ingress_alb.yaml` file from [here](https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/main/deploy/deploy/ingress_alb.yaml).Uncomment the host value and replace your DNS hostname with `example.com` in ingress_alb.yaml file in line **18**.
+11. Download the `ingress_alb.yaml` file from [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/deploy/ingress_alb.yaml).Uncomment the host value and replace your DNS hostname with `example.com` in ingress_alb.yaml file in line **18**.
 
       ![DNS](../images/faq/ingress_alb_host.png)
 

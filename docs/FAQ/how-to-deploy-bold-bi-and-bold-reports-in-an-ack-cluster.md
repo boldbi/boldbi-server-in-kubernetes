@@ -27,7 +27,7 @@ Please ensure that you have fulfilled these prerequisites before proceeding with
 
 ## Steps for Bold BI and Bold Reports auto deployment using kubectl.
 
-1. Download the deployment file from [here](https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/main/deploy/deploy/common_ack_deploy.yaml) to deploy Bold BI and Bold Reports on AKS.
+1. Download the deployment file from [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/deploy/common_ack_deploy.yaml) to deploy Bold BI and Bold Reports on AKS.
 
 2. Navigate to the folder where the deployment files were downloaded in **Step 1**.
 
@@ -124,7 +124,7 @@ The following steps will guide you through the process of deploying Bold BI and 
 1. Add the Bold BI and Bold Reports helm repository.
 
 ```console
-helm repo add boldbi https://boldbi.github.io/boldbi-kubernetes
+helm repo add boldbi https://boldbi.github.io/boldbi-server-in-kubernetes
 helm repo update
 ```
 
@@ -134,7 +134,7 @@ helm repo update
 helm search repo boldbi
 
 NAME            CHART VERSION   APP VERSION     DESCRIPTION
-boldbi/bold-common   16.1.70           16.1.70         Embed powerful analytics inside your apps and t...
+boldbi/bold-common   16.1.80           16.1.80         Embed powerful analytics inside your apps and t...
 ```
 
 _See [helm repo](https://helm.sh/docs/helm/helm_repo/) for command documentation._
@@ -149,7 +149,7 @@ kubectl create ns bold-services
 
 ## Install Chart
 
-For the Helm chart, you need to craft a `values.yaml` file. So download the values.yaml file from [here](https://raw.githubusercontent.com/boldbi/boldbi-kubernetes/main/helm/custom-values/common-ack-values.yaml) and make required changes based on your cluster provider.
+For the Helm chart, you need to craft a `values.yaml` file. So download the values.yaml file from [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/helm/custom-values/common-ack-values.yaml) and make required changes based on your cluster provider.
 
 The following table allows you to craft the `values.yaml` file with required values for Bold BI and Bold Reports deployment. So please read the description carefully and enter the values in values.yaml file.
 
