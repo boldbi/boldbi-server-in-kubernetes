@@ -14,16 +14,16 @@ Before upgrading the Bold BI to latest version, make sure to take the backup of 
 ## Proceeding with upgrade
 Bold BI updates the database schema of your current version to the latest version. The upgrade process will retain all the resources and settings from the previous deployment.
 
-You can download the upgrade script from this [link](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v16.1.80/upgrade/upgrade.sh) or use the below command.
+You can download the upgrade script from this [link](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v16.1.90/upgrade/upgrade.sh) or use the below command.
 
 ```sh
-curl -o upgrade.sh https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v16.1.80/upgrade/upgrade.sh
+curl -o upgrade.sh https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v16.1.90/upgrade/upgrade.sh
 ```
 
 Run the following command to execute the shell script to upgrade Bold BI.
 
 ```sh
-./upgrade.sh --version="16.1.80" --namespace="bold-services"
+./upgrade.sh --version="16.1.90" --namespace="bold-services"
 ```
 
 <table>
