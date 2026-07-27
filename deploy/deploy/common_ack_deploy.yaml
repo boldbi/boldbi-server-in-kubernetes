@@ -266,7 +266,7 @@ spec:
         - name: BI_Version
           value: "16.1.90"
         - name: Reports_Version
-          value: "13.1.26"
+          value: "14.1.12"
         - name: Is_Common_IDP
           value: "true"
         readinessProbe:
@@ -681,7 +681,7 @@ spec:
     spec:
       containers:
       - name: reports-web-container
-        image: us-docker.pkg.dev/boldreports/multi-container/boldreports-server:13.1.26
+        image: us-docker.pkg.dev/boldreports/multi-container/boldreports-server:14.1.12
         ports:
         - containerPort: 80
         env:
@@ -734,7 +734,7 @@ spec:
     spec:
       containers:
       - name: reports-api-container
-        image: us-docker.pkg.dev/boldreports/multi-container/boldreports-server-api:13.1.26
+        image: us-docker.pkg.dev/boldreports/multi-container/boldreports-server-api:14.1.12
         ports:
         - containerPort: 80
         env:
@@ -787,7 +787,7 @@ spec:
     spec:
       containers:
       - name: reports-jobs-container
-        image: us-docker.pkg.dev/boldreports/multi-container/boldreports-server-jobs:13.1.26
+        image: us-docker.pkg.dev/boldreports/multi-container/boldreports-server-jobs:14.1.12
         ports:
         - containerPort: 80
         env:
@@ -840,7 +840,7 @@ spec:
     spec:
       containers:
       - name: reports-reportservice-container
-        image: us-docker.pkg.dev/boldreports/multi-container/boldreports-designer:13.1.26
+        image: us-docker.pkg.dev/boldreports/multi-container/boldreports-designer:14.1.12
         ports:
         - containerPort: 80
         env:
@@ -897,7 +897,7 @@ spec:
     spec:
       containers:
       - name: reports-viewer-container
-        image: us-docker.pkg.dev/boldreports/multi-container/boldreports-viewer:13.1.26
+        image: us-docker.pkg.dev/boldreports/multi-container/boldreports-viewer:14.1.12
         ports:
         - containerPort: 80
         resources:

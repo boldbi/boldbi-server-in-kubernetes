@@ -10,4 +10,6 @@ type: Opaque
 stringData:
   BOLD_SERVICES_USER_EMAIL: "{{ .Values.rootUserDetails.email }}"
   BOLD_SERVICES_USER_PASSWORD: "{{ .Values.rootUserDetails.password }}"
+  BOLD_SERVICES_SITE_IDENTIFIER: "{{ default "site1" .Values.brandingDetails.siteIdentifier }}"
+  BOLD_SERVICES_SITE_NAME: "{{ default "Bold BI Enterprise Dashboards" .Values.brandingDetails.siteName }}"
 {{- end }}
