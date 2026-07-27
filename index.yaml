@@ -703,6 +703,19 @@ entries:
     urls:
     - https://boldbi.github.io/boldbi-server-in-kubernetes/bold-common-16.1.70.tgz
     version: 16.1.70
+  - apiVersion: v2
+    appVersion: 16.1.90
+    created: "2022-04-11T13:06:57.5032264+05:30"
+    description: Embed powerful analytics inside your apps and turn your customers
+      into success stories with built-in intelligence features.
+    digest: 35484164986676650f974bd6ff7ceaa191ba057d76c1ec790d4dc02876096d78
+    home: https://www.boldbi.com/
+    icon: https://website-assets.boldbi.com/wp-content/uploads/2019/05/boldbi-header-menu-logo.svg
+    name: bold-common
+    type: application
+    urls:
+    - https://boldbi.github.io/boldbi-server-in-kubernetes/bold-common-16.1.90.tgz
+    version: 16.1.90
   boldbi:
   - apiVersion: v2
     appVersion: 15.2.6
