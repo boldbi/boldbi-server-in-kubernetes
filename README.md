@@ -47,15 +47,178 @@ The following requirements are necessary to run the Bold BI solution.
 * **Web Browser:** Microsoft Edge | Mozilla Firefox | Chrome
 * **Database:** PostgreSQL 13.0+ | Microsoft SQL Server 2016+ | MySQL 8.0+ | Oracle Database 19c+
 
-## Deployment Methods
+## Quick Installation Guide for Bold BI
 
-There are two ways to deploy Bold BI on the Kubernetes cluster. Please refer to the following documents for Bold BI deployment:
+Use the following steps to quickly set up and deploy Bold BI.
+
+### 1. Ingress Controller Setup
+
+**Install NGINX Ingress Controller**
+
+   Follow official docs: [NGINX Ingress Deploy](https://kubernetes.github.io/ingress-nginx/deploy/)
+
+   Or install via Helm:
+
+   ```bash
+   helm repo add nginx-stable https://helm.nginx.com/stable
+
+   helm repo update
+   
+   helm install ingress-nginx ingress-nginx/ingress-nginx --version 4.13.1 --namespace ingress-nginx --create-namespace --set controller.service.externalTrafficPolicy=Local
+   ```
+
+  Refer to the Helm chart release details here: https://github.com/kubernetes/ingress-nginx
+
+**Note**:
+
+  * If you are using a domain name, make sure the Ingress Controller’s External IP is mapped to your DNS.
+
+  * If you are accessing Bold BI via the IP address directly, no DNS mapping is required.
+
+### 2. Add Bold BI Helm Repository
+
+```bash
+helm repo add boldbi https://boldbi.github.io/boldbi-kubernetes
+helm repo update
+helm search repo boldbi
+```
+
+Example output:
+
+```
+NAME            CHART VERSION   APP VERSION   DESCRIPTION
+boldbi/boldbi   13.1.10         13.1.10       Embed powerful analytics inside your apps
+```
+
+### 3. Deploy Bold BI
+
+#### Step 1: Create Namespace
+
+```bash
+kubectl create namespace [namespace-name]
+```
+
+#### Step 2: Install Bold BI
+
+##### Standard Bold BI Installation Command
+
+```bash
+helm install [RELEASE_NAME] boldbi/boldbi -n [namespace-name] \
+  --set appBaseUrl="https://<your-domain-or-ip>" \
+  --set clusterProvider="<aks/eks/gke/oke/ack>" \
+  [provider-specific-storage-settings]
+````
+
+> **Note:** Replace the placeholders based on your cloud provider. Refer to the provider-specific commands below.
+
+##### Commands to Install Bold BI in Different Cloud Providers
+
+**🔹 AKS**
+
+```bash
+helm install boldbi boldbi/boldbi -n bold-services \
+  --set appBaseUrl="https://boldbi.example.com" \
+  --set clusterProvider="aks" \
+  --set persistentVolume.aks.nfs.fileShareName="premiumstorage1234/boldbi" \
+  --set persistentVolume.aks.nfs.hostName="premiumstorage1234.file.core.windows.net"
+```
+
+*Replace `premiumstorage1234/boldbi` with your FileShareName share name and `premiumstorage1234.file.core.windows.net` with your storage account’s HostName.*
+
+**🔹 EKS**
+
+```bash
+helm install boldbi boldbi/boldbi -n bold-services \
+  --set appBaseUrl="https://boldbi.example.com" \
+  --set clusterProvider="eks" \
+  --set persistentVolume.eks.efsFileSystemId="fs-12345678"
+```
+
+*Replace `fs-12345678` with your actual EFS File System ID.*
+
+**🔹 GKE**
+
+```bash
+helm install boldbi boldbi/boldbi -n bold-services \
+  --set appBaseUrl="https://boldbi.example.com" \
+  --set clusterProvider="gke" \
+  --set persistentVolume.gke.fileShareName="boldbi-share" \
+  --set persistentVolume.gke.fileShareIp="10.0.0.5"
+```
+
+*Replace `boldbi-share` with your Filestore share name and `10.0.0.5` with the Filestore IP address.*
+
+**🔹 OKE**
+
+```bash
+helm install boldbi boldbi/boldbi -n bold-services \
+  --set appBaseUrl="https://boldbi.example.com" \
+  --set clusterProvider="oke" \
+  --set persistentVolume.oke.volumeHandle="<FileSystemOCID>:<MountTargetIP>:<path>"
+```
+
+*Only one volume type is supported at a time. Use the format above for filesystem volumes.*
+
+**🔹 ACK**
+
+```bash
+helm install boldbi boldbi/boldbi -n bold-services \
+  --set appBaseUrl="https://boldbi.example.com" \
+  --set clusterProvider="ack" \
+  --set persistentVolume.ack.serverName="0123456a78-nas123.cn-hangzhou.nas.aliyuncs.com" \
+  --set persistentVolume.ack.filePath="/bold-services"
+```
+
+*Replace `0123456a78-nas123.cn-hangzhou.nas.aliyuncs.com` with your ACK NAS mount target hostname. For filePath, you can specify your own path; the default value is /bold-services.*
+
+The following table explains the key parameters used in the Helm install command for deploying Bold BI on different Kubernetes providers.
+
+| Parameter                                | Description                                                                        |
+| ---------------------------------------- | ---------------------------------------------------------------------------------- |
+| `RELEASE_NAME`                           | The name you want to give to this Helm deployment.                                 |
+| `appBaseUrl` | Base URL to access Bold BI. Can be a domain (HTTPS) or an external Ingress IP (HTTP). For example: `https://your-domain.com` or `http://<External-Ingress-IP>` |
+| `clusterProvider`                        | The Kubernetes provider you are using.                                             |
+| `persistentVolume.aks.nfs.fileShareName` | File Share name for AKS NFS storage.                                               |
+| `persistentVolume.aks.nfs.hostName`      | Hostname of the AKS storage account.                                               |
+| `persistentVolume.eks.efsFileSystemId`   | EFS File System ID for EKS storage.                                                |
+| `persistentVolume.gke.fileShareName`     | Filestore share name for GKE storage.                                              |
+| `persistentVolume.gke.fileShareIp`       | IP address of the GKE Filestore instance.                                          |
+| `persistentVolume.oke.volumeHandle`      | Volume handle for OKE storage. Format: `<FileSystemOCID>:<MountTargetIP>:<path>`   |
+| `persistentVolume.ack.serverName`    | Hostname of the NAS mount target for ACK storage. |
+| `persistentVolume.ack.filePath`      | File path inside the NAS where Bold BI data will be stored. Default: `/bold-services`. |
+
+### 4. SSL/TLS Configuration
+
+If you have an SSL certificate for your domain, you can configure Bold BI with HTTPS:
+
+* Set the `appBaseUrl` with `https://<your-domain>`
+
+### Create TLS Secret
+
+Run the following command with your certificate and key files:
+
+```bash
+kubectl create secret tls bold-tls -n [namespace-name] --key <key-path> --cert <certificate-path>
+```
+
+* The secret name **must** be `bold-tls`.
+* Example:
+
+```bash
+kubectl create secret tls bold-tls -n bold-services --key tls.key --cert tls.crt
+```
+
+Now your Bold BI site is available at the IP address or domain name specified in your appBaseUrl.
+
+## Advanced Deployment Options
+
+For more advanced deployment scenarios using **Helm** and **kubectl**, refer to the following guides:
 
 * [Deploy Bold BI using Kubectl](docs/index.md)
 * Deploy using Helm
     1. [Deploy Bold BI using Helm](helm/README.md)
     2. [Common Deployment(BI and Reports) using Helm](helm/bold-common/README.md)
-
+  
 # License
 
 [https://www.boldbi.com/terms-of-use#embedded](<https://www.boldbi.com/terms-of-use#embedded?utm_source=github&utm_medium=backlinks>)</br>
