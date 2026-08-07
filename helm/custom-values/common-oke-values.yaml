@@ -62,15 +62,15 @@ image:
   biRepo: us-docker.pkg.dev/boldbi-294612/boldbi
   reportsRepo: us-docker.pkg.dev/boldreports/multi-container
   # Overrides the image tag whose default is the chart appVersion.
-  idTag: 16.1.90
-  biTag: 16.1.90
+  idTag: 16.2.5
+  biTag: 16.2.5
   reportsTag: 14.1.12
   pullPolicy: IfNotPresent
 imagePullSecrets: []
 
 versions:
   idp: "4.19.1"
-  bi: "16.1.90"
+  bi: "16.2.5"
   reports: "14.1.12"
 
 loadBalancer:

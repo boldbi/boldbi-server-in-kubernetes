@@ -1,9 +1,9 @@
 apiVersion: v2
-appVersion: 16.1.90
+appVersion: 16.2.5
 description: Embed powerful analytics inside your apps and turn your customers into
   success stories with built-in intelligence features
 home: https://www.boldbi.com/
 icon: https://website-assets.boldbi.com/wp-content/uploads/2019/05/boldbi-header-menu-logo.svg
 name: bold-common
 type: application
-version: 16.1.90
+version: 16.2.5
