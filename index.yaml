@@ -1781,7 +1781,7 @@ entries:
     version: 14.2.50
   KC276755:
   - apiVersion: v2
-    appVersion: 16.2.5
+    appVersion: 16.1.61
     created: "2022-04-11T13:06:57.6150424+05:30"
     description: Embed powerful analytics inside your apps and turn your customers
       into success stories with built-in intelligence features.
@@ -1791,6 +1791,6 @@ entries:
     name: KC276755
     type: application
     urls:
-    - https://boldbi.github.io/boldbi-server-in-kubernetes/kc276755-16.2.5.tgz
-    version: 16.2.5
+    - https://boldbi.github.io/boldbi-server-in-kubernetes/KC276755-16.1.61.tgz
+    version: 16.1.61
 generated: "2022-04-11T13:06:57.3735836+05:30"
