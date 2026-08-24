@@ -1779,7 +1779,7 @@ entries:
     urls:
     - https://boldbi.github.io/boldbi-server-in-kubernetes/kc281670-beta-14.2.50.tgz
     version: 14.2.50
-  kc276755:
+  KC276755:
   - apiVersion: v2
     appVersion: 16.1.61
     created: "2022-04-11T13:06:57.6150424+05:30"
@@ -1793,6 +1793,7 @@ entries:
     urls:
     - https://boldbi.github.io/boldbi-server-in-kubernetes/KC276755-16.1.61.tgz
     version: 16.1.61
+  kc276755:
   - apiVersion: v2
     appVersion: 16.2.5
     created: "2022-04-11T13:06:57.6150424+05:30"
