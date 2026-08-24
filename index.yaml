@@ -1791,6 +1791,6 @@ entries:
     name: KC276755
     type: application
     urls:
-    - https://boldbi.github.io/boldbi-server-in-kubernetes/KC276755-16.2.5.tgz
+    - https://boldbi.github.io/boldbi-server-in-kubernetes/kc276755-16.2.5.tgz
     version: 16.2.5
 generated: "2022-04-11T13:06:57.3735836+05:30"
