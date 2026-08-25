@@ -1669,6 +1669,20 @@ entries:
     urls:
     - https://boldbi.github.io/boldbi-server-in-kubernetes/kc8343-15.1.65.tgz
     version: 15.1.65
+  kc276755:
+  - apiVersion: v2
+    appVersion: 16.2.5
+    created: "2026-08-25T12:59:16.952928+05:30"
+    description: Embed powerful analytics inside your apps and turn your customers
+      into success stories with built-in intelligence features
+    digest: 892876e7fa9c78b7e4eaac6f0c8b3c7d2fc035254454da71811866523f795a9b
+    home: https://www.boldbi.com/
+    icon: https://website-assets.boldbi.com/wp-content/uploads/2019/05/boldbi-header-menu-logo.svg
+    name: kc276755
+    type: application
+    urls:
+    - https://boldbi.github.io/boldbi-server-in-kubernetes/kc276755-16.2.5-nfs-eit.tgz
+    version: 16.2.5
   kc269938:
   - apiVersion: v2
     appVersion: 9.1.73
@@ -1779,18 +1793,4 @@ entries:
     urls:
     - https://boldbi.github.io/boldbi-server-in-kubernetes/kc281670-beta-14.2.50.tgz
     version: 14.2.50
-  kc276755:
-  - apiVersion: v2
-    appVersion: 16.2.5
-    created: "2022-04-11T13:06:57.6150424+05:30"
-    description: Embed powerful analytics inside your apps and turn your customers
-      into success stories with built-in intelligence features.
-    digest: 4b1db9c3d491326af276dd259d723972a43e37c824e13920225614318b85628d
-    home: https://www.boldbi.com/
-    icon: https://website-assets.boldbi.com/wp-content/uploads/2019/05/boldbi-header-menu-logo.svg
-    name: kc276755
-    type: application
-    urls:
-    - https://boldbi.github.io/boldbi-server-in-kubernetes/kc276755-16.2.5.tgz
-    version: 16.2.5
 generated: "2022-04-11T13:06:57.3735836+05:30"
