@@ -104,7 +104,7 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   idTag: 16.2.5
   biTag: 16.2.5
-  reportsTag: 14.1.12
+  reportsTag: 14.1.18
   pullPolicy: IfNotPresent
 imagePullSecrets: []
 
@@ -112,7 +112,7 @@ versions:
 
   idp: 5.1.23
   bi: 16.2.5
-  reports: 14.1.12
+  reports: 14.1.18
 
 loadBalancer:
   type: nginx
