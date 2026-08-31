@@ -1,0 +1,156 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bold-services
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: version-config
+  namespace: bold-services
+data:
+  BOLD_SERVICES_BI_API_VERSION: 16.2.5
+  BOLD_SERVICES_BI_DESIGNER_VERSION: 16.2.5
+  BOLD_SERVICES_BI_JOBS_VERSION: 16.2.5
+  BOLD_SERVICES_BI_WEB_VERSION: 16.2.5
+  BOLD_SERVICES_ID_API_VERSION: 16.2.5
+  BOLD_SERVICES_ID_WEB_VERSION: 16.2.5
+  BOLD_SERVICES_UMS_WEB_VERSION: 16.2.5
+  BOLD_SERVICES_BI_ETL_VERSION: 16.2.5
+  BOLD_SERVICES_BI_AI_VERSION: 16.2.5
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: branding-config
+  namespace: bold-services
+# All the branding images variables are accepted as URL.
+# Image type: png, svg, jpg, jpeg
+# Ex: https://example.com/loginlogo.jpg
+data:
+  # This is the header logo for the application, and the preferred image size is 40 x 40 pixels.
+  BOLD_SERVICES_BRANDING_MAIN_LOGO: ""
+  
+  # This is the login logo for the application, and the preferred image size is 200 x 40 pixels.
+  BOLD_SERVICES_BRANDING_LOGIN_LOGO: ""
+  
+  # This is an email logo, and the preferred image size is 200 x 40 pixels.
+  BOLD_SERVICES_BRANDING_EMAIL_LOGO: ""
+  
+  # This is a favicon, and the preferred image size is 40 x 40 pixels.
+  BOLD_SERVICES_BRANDING_FAVICON: ""
+  
+  # This is powered by the logo, and the preferred size is 100 x 25 pixels.
+  BOLD_SERVICES_BRANDING_FOOTER_LOGO: ""
+  
+  # This is organization name.
+  BOLD_SERVICES_SITE_NAME: ""
+  
+  # This is site identifier, and it will be the part of the application URL.
+  BOLD_SERVICES_SITE_IDENTIFIER: ""
+  
+  # To show or hide the copy right info. (true or false)
+  BOLD_SERVICES_SHOW_COPY_RIGHT_INFO: ""
+  
+  # To show or hide the powered by logo information. (true or false)
+  BOLD_SERVICES_SHOW_POWERED_BY_SYNCFUSION: ""
+
+  # Note: If you want to use the custom branding, provide the value for all branding variables 
+  # If all variable values are given, application will use the branding images,
+  # otherwise it will take the default logos.
+---
+apiVersion: v1
+kind: Secret
+metadata:  
+  name: bold-user-secret
+  namespace: bold-services
+type: Opaque
+stringData:
+  # It should be a valid email.
+  BOLD_SERVICES_USER_EMAIL: ""
+
+  # It should meet our password requirements.
+  BOLD_SERVICES_USER_PASSWORD: ""
+---
+apiVersion: v1
+kind: Secret
+metadata:  
+  name: bold-license-key
+  namespace: bold-services
+type: Opaque
+stringData:
+  #  The Bold BI licnece key which you have purchesed.
+  BOLD_SERVICES_UNLOCK_KEY: ""
+---
+apiVersion: v1
+kind: Secret
+metadata:  
+  name: bold-db-secret
+  namespace: bold-services
+type: Opaque
+stringData:
+  # Type of database server can be used for configuring the Bold BI. Eg: mssql, mysql and postgresql
+  BOLD_SERVICES_DB_TYPE: ""
+
+  # Name of the Database Server
+  BOLD_SERVICES_DB_HOST: ""
+
+  # The system will use the following default port numbers based on the database server type.
+  # PostgrSQL – 5234 and MySQL -3306
+  # Please specify the port number for your database server if it is configured on a different port.
+  # For MS SQL Server, this parameter is not necessary.
+  BOLD_SERVICES_DB_PORT: ""
+
+  # Username for the database server
+  # Please refer to this documentation for information on the user's permissions.
+  # https://help.boldbi.com/embedded-bi/faq/what-are-the-database-permissions-required-to-set-up-bold-bi-embedded/
+  BOLD_SERVICES_DB_USER: ""
+
+  # The database user's password
+  BOLD_SERVICES_DB_PASSWORD: ""
+
+  # If the database name is not specified, the system will create a new database called bold services.
+  # If you specify a database name, it should already exist on the server.
+  BOLD_SERVICES_DB_NAME: ""
+
+  # For PostgreSQL DB Servers, this is an optional parameter.
+  # The system will use the database name postgres by default.
+  # If your database server uses a different default database, please provide it here.
+  BOLD_SERVICES_POSTGRESQL_MAINTENANCE_DB: ""
+
+  # If your database server requires additional connection string parameters, include them here
+  # Connection string parameters can be found in the official document.
+  # My SQL: https://dev.mysql.com/doc/connector-net/en/connector-net-8-0-connection-options.html
+  # PostgreSQL: https://www.npgsql.org/doc/connection-string-parameters.html
+  # MS SQL: https://docs.microsoft.com/en-us/dotnet/api/system.data.sqlclient.sqlconnection.connectionstring
+  # Note: A semicolon(;) should be used to separate multiple parameters.
+  BOLD_SERVICES_DB_ADDITIONAL_PARAMETERS: ""
+
+  #A database schema defines the structure, organization, and constraints of data within a database, including tables, fields, relationships, and indexes.
+  #In MSSQL, the default schema is dbo.
+  #In PostgreSQL, the default schema is public.
+  #Both schemas contain tables and other database objects by default.
+  BOLD_SERVICES_DB_SCHEMA: ""
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-urls-config
+  namespace: bold-services
+data:
+  ID_WEB_SERVICE_URL: http://id-web-service:6000
+  ID_API_SERVICE_URL: http://id-api-service:6001/api
+  ID_UMS_SERVICE_URL: http://id-ums-service:6002/ums
+  BI_WEB_SERVICE_URL: http://bi-web-service:6004/bi
+  BI_API_SERVICE_URL: http://bi-api-service:6005/bi/api
+  BI_JOBS_SERVICE_URL: http://bi-jobs-service:6006/bi/jobs
+  BI_DESIGNER_SERVICE_URL: http://bi-dataservice-service:6007/bi/designer
+  BI_DESIGNER_HELPER_SERVICE_URL: http://bi-dataservice-service:6007/bi/designer/helper
+  BOLD_ETL_SERVICE_URL: http://bold-etl-service:6009
+  BOLD_ETL_BLAZOR_SERVICE_URL: http://bold-etl-service:6009/framework/blazor.server.js
+  BOLD_AI_SERVICE_URL: http://bold-ai-service:6010/aiservice
+  REPORTS_WEB_SERVICE_URL: http://reports-web-service:6550/reporting
+  REPORTS_API_SERVICE_URL: http://reports-api-service:6551/reporting/api
+  REPORTS_JOBS_SERVICE_URL: http://reports-jobs-service:6552/reporting/jobs
+  REPORTS_DESIGNER_SERVICE_URL: http://reports-reportservice-service:6553/reporting/reportservice
+  REPORTS_VIEWER_SERVICE_URL: http://reports-viewer-service:6554/reporting/viewer

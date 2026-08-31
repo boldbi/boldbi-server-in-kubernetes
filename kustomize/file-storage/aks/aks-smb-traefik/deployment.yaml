@@ -1,0 +1,538 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: id-web-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: id-web
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: id-web
+    spec:
+      containers:
+      - name: id-web-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-identity:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: APP_BASE_URL
+          value: http://4.187.234.13
+        - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: bold-secret
+              key: application_insights_connection_string_secret
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: id-web-volume
+        - mountPath: /application/idp/web/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: id-web-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: id-api-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: id-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: id-api
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: id-api-volume
+      containers:
+      - name: id-api-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-identity-api:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: id-api-volume
+        - mountPath: /application/idp/api/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: id-api-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: id-ums-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: id-ums
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: id-ums
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: id-ums-volume
+      containers:
+      - name: id-ums-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-ums:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: BOLD_SERVICES_USE_SITE_IDENTIFIER
+          value: "true"
+        envFrom:
+        - secretRef:
+              name: bold-user-secret
+        - secretRef:
+              name: bold-db-secret
+        - secretRef:
+              name: bold-license-key
+        - configMapRef:
+              name: branding-config
+              optional: true
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: id-ums-volume
+        - mountPath: /application/idp/ums/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: id-ums-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-web-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-web
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-web
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-web-volume
+      containers:
+      - name: bi-web-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-web-volume
+        - mountPath: /application/bi/web/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: bi-web-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-api-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-api
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-api-volume
+      containers:
+      - name: bi-api-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server-api:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-api-volume
+        - mountPath: /application/bi/api/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: bi-api-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-jobs-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-jobs
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-jobs
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-jobs-volume
+      containers:
+      - name: bi-jobs-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server-jobs:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-jobs-volume
+        - mountPath: /application/bi/jobs/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: bi-jobs-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-dataservice-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-dataservice
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-dataservice
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-dataservice-volume
+      containers:
+      - name: bi-dataservice-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-designer:16.2.5
+        ports:
+        - containerPort: 80
+        env:
+        - name: INSTALL_OPTIONAL_LIBS
+          value: "mongodb,mysql,influxdb,snowflake,oracle,clickhouse,google"
+        - name: widget_bing_map_enable
+          valueFrom:
+            secretKeyRef:
+              name: bold-secret
+              key: widget_bing_map_enable_secret
+        - name: widget_bing_map_api_key
+          valueFrom:
+            secretKeyRef:
+              name: bold-secret
+              key: widget_bing_map_api_key_secret
+        - name: AppSettings__CustomSizePDFExport
+          value: "true"
+        - name: AppSettings__BrowserTimezone
+          value: "true"
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: AppSettings__locale-path
+          value: ""
+        - name: AppSettings__EnableQueryMetricsInDebugFiles
+          value: "false"
+        - name: AppSettings__EnableQueryMetricsWithQueryInDebugFiles
+          value: "false"
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-dataservice-volume
+        - mountPath: /application/bi/dataservice/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: bi-dataservice-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bold-etl-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bold-etl
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bold-etl
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bold-etl-volume
+      containers:
+      - name: bold-etl-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-etl:16.2.5
+        ports:
+        - containerPort: 80
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bold-etl-volume
+        - mountPath: /application/etl/etlservice/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: bold-etl-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bold-ai-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bold-ai
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bold-ai
+    spec:
+      imagePullSecrets:
+        - name: dev-art-reg-key
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bold-ai-volume
+      containers:
+      - name: bold-ai-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-ai:16.2.5
+        ports:
+        - containerPort: 8080
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bold-ai-volume
+        - mountPath: /application/ai/aiservice/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: bold-ai-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config

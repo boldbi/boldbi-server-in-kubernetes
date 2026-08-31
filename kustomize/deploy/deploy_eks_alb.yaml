@@ -1,0 +1,962 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bold-services
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: efs-sc
+  namespace: bold-services
+provisioner: efs.csi.aws.com
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+ name: bold-fileserver
+ namespace: bold-services
+spec:
+ capacity:
+   storage: 3Gi
+ accessModes:
+ - ReadWriteMany
+ persistentVolumeReclaimPolicy: Retain
+ storageClassName: efs-sc
+ csi:
+   driver: efs.csi.aws.com
+   volumeHandle: <efs_file_system_id>
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+ name: bold-fileserver-claim
+ namespace: bold-services
+spec:
+ accessModes:
+ - ReadWriteMany
+ storageClassName: efs-sc
+ volumeName: bold-fileserver
+ resources:
+   requests:
+     storage: 3Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:  
+  name: bold-license-key
+  namespace: bold-services
+type: Opaque
+stringData:
+  #  The Bold BI licnece key which you have purchesed.
+  BOLD_SERVICES_UNLOCK_KEY: ""
+---
+apiVersion: v1
+kind: Secret
+metadata:  
+  name: bold-user-secret
+  namespace: bold-services
+type: Opaque
+stringData:
+  # It should be a valid email.
+  BOLD_SERVICES_USER_EMAIL: ""
+
+  # It should meet our password requirements.
+  BOLD_SERVICES_USER_PASSWORD: ""
+---
+apiVersion: v1
+kind: Secret
+metadata:  
+  name: bold-db-secret
+  namespace: bold-services
+type: Opaque
+stringData:
+  # Type of a database server can be used for configuring the Bold BI, for example, mssql, mysql, and postgresql.
+  BOLD_SERVICES_DB_TYPE: ""
+
+  # Name of the Database Server
+  BOLD_SERVICES_DB_HOST: ""
+
+  # The system will use the following default port numbers based on the database server type.
+  # PostgrSQL – 5432 and MySQL -3306
+  # Please specify the port number for your database server if it is configured on a different port.
+  # For MS SQL Server, this parameter is not necessary.
+  BOLD_SERVICES_DB_PORT: ""
+
+  # Username for the database server
+  # Please refer to this documentation for information on the user's permissions.
+  # https://help.boldbi.com/embedded-bi/faq/what-are-the-database-permissions-required-to-set-up-bold-bi-embedded/
+  BOLD_SERVICES_DB_USER: ""
+
+  # The database user's password
+  BOLD_SERVICES_DB_PASSWORD: ""
+
+  # If the database name is not specified, the system will create a new database called bold services.
+  # If you specify a database name, it should already exist on the server.
+  BOLD_SERVICES_DB_NAME: ""
+
+  # For PostgreSQL DB Servers, this is an optional parameter.
+  # The system will use the database name postgres by default.
+  # If your database server uses a different default database, please provide it here.
+  BOLD_SERVICES_POSTGRESQL_MAINTENANCE_DB: ""
+
+  # If your database server requires additional connection string parameters, include them here.
+  # Connection string parameters can be found in the official document.
+  # My SQL: https://dev.mysql.com/doc/connector-net/en/connector-net-8-0-connection-options.html
+  # PostgreSQL: https://www.npgsql.org/doc/connection-string-parameters.html
+  # MS SQL: https://docs.microsoft.com/en-us/dotnet/api/system.data.sqlclient.sqlconnection.connectionstring
+  # Note: A semicolon(;) should be used to separate multiple parameters.
+  BOLD_SERVICES_DB_ADDITIONAL_PARAMETERS: ""
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bold-secret
+  namespace: bold-services
+type: Opaque
+stringData:
+  widget_bing_map_enable_secret: ""
+  widget_bing_map_api_key_secret: ""
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: log4net-config
+  namespace: bold-services
+data:
+  Log4Net.config: |
+    <?xml version="1.0" encoding="utf-8" ?>
+    <configuration>
+      <log4net threshold="ALL">
+        <root>
+          <level value="ALL" />
+           <!-- <appender-ref ref="ConsoleAppender" /> -->
+          <appender-ref ref="FILE_DEBUG_APPENDER" />
+          <appender-ref ref="FILE_ERROR_APPENDER" />
+        </root>
+        <!-- === File Appender for NON-ERROR messages file === -->
+        <appender name="FILE_DEBUG_APPENDER" type="log4net.Appender.RollingFileAppender" class="ch.qos.logback.classic.AsyncAppender">
+          <file type="log4net.Util.PatternString" value="%property{AppDataPath}/logs/%property{loggername}/debug-info-%env{HOSTNAME}.txt" />
+          <filter type="log4net.Filter.LevelMatchFilter">
+            <levelToMatch value="INFO" />
+          </filter>
+          <filter type="log4net.Filter.DenyAllFilter" />
+          <additivity value="true" />
+          <appendToFile value="true" />
+          <maxSizeRollBackups value="1" />
+          <maximumFileSize value="300KB" />
+          <rollingStyle value="Size" />
+          <staticLogFileName value="true" />
+          <layout type="log4net.Layout.PatternLayout">
+            <header type="log4net.Util.PatternString" value="#Software: %property{loggername} %newline#Date: %date %newline#Fields: date thread namespace methodname message %newline" />
+            <conversionPattern value="%date	[%thread]	%message%newline" />
+          </layout>
+        </appender>
+        <!-- === File Appender for ERROR messages file === -->
+        <appender name="FILE_ERROR_APPENDER" type="log4net.Appender.RollingFileAppender" class="ch.qos.logback.classic.AsyncAppender">
+          <file type="log4net.Util.PatternString" value="%property{AppDataPath}/logs/%property{loggername}/errors-%env{HOSTNAME}.txt" />
+          <filter type="log4net.Filter.LevelMatchFilter">
+            <levelToMatch value="ERROR" />
+          </filter>
+          <filter type="log4net.Filter.DenyAllFilter" />
+          <additivity value="true" />
+          <appendToFile value="true" />
+          <maxSizeRollBackups value="10" />
+          <maximumFileSize value="100KB" />
+          <rollingStyle value="Size" />
+          <staticLogFileName value="true" />
+          <layout type="log4net.Layout.PatternLayout">
+            <header type="log4net.Util.PatternString" value="#Software: %property{loggername} %newline#Date: %date %newline#Fields: date thread namespace methodname message %newline" />
+            <conversionPattern value="%date	[%thread]	%-5level	%message%newline" />
+          </layout>
+        </appender>
+        <!-- === Console Appender to use in BufferingForwardingAppender === -->
+        <appender name="ConsoleAppender" type="log4net.Appender.ConsoleAppender">
+          <layout type="log4net.Layout.PatternLayout">
+            <conversionPattern type="log4net.Util.PatternString" value="%newline%%-5level  %property{loggername}  %env{HOSTNAME}  %%date	[%%thread]	%%message%newline" />
+          </layout>
+        </appender>  
+      </log4net>
+    </configuration>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: id-web-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: id-web
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: id-web
+    spec:
+      containers:
+      - name: id-web-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-identity:7.1.6
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: APP_BASE_URL
+          value: <application_base_url>
+        - name: INSTALL_OPTIONAL_LIBS
+          value: "mongodb,mysql,influxdb,snowflake,oracle,clickhouse,google"
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: id-web-volume
+        - mountPath: /application/idp/web/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: id-web-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: id-api-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: id-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: id-api
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: id-api-volume
+      containers:
+      - name: id-api-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-identity-api:7.1.6
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: id-api-volume
+        - mountPath: /application/idp/api/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: id-api-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: id-ums-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: id-ums
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: id-ums
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: id-ums-volume
+      containers:
+      - name: id-ums-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-ums:7.1.6
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        envFrom:
+        - secretRef:
+              name: bold-user-secret
+        - secretRef:
+              name: bold-db-secret
+        - secretRef:
+              name: bold-license-key
+        - configMapRef:
+              name: branding-config
+              optional: true
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: id-ums-volume
+        - mountPath: /application/idp/ums/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: id-ums-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-web-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-web
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-web
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-web-volume
+      containers:
+      - name: bi-web-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server:7.1.6
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-web-volume
+        - mountPath: /application/bi/web/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: bi-web-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-api-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-api
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-api-volume
+      containers:
+      - name: bi-api-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server-api:7.1.6
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-api-volume
+        - mountPath: /application/bi/api/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: bi-api-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-jobs-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-jobs
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-jobs
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-jobs-volume
+      containers:
+      - name: bi-jobs-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server-jobs:7.1.6
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-jobs-volume
+        - mountPath: /application/bi/jobs/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: bi-jobs-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-dataservice-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-dataservice
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-dataservice
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-dataservice-volume
+      containers:
+      - name: bi-dataservice-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-designer:7.1.6
+        ports:
+        - containerPort: 80
+        env:
+        - name: widget_bing_map_enable
+          valueFrom:
+            secretKeyRef:
+              name: bold-secret
+              key: widget_bing_map_enable_secret
+        - name: widget_bing_map_api_key
+          valueFrom:
+            secretKeyRef:
+              name: bold-secret
+              key: widget_bing_map_api_key_secret
+        - name: AppSettings__CustomSizePDFExport
+          value: "true"
+        - name: AppSettings__BrowserTimezone
+          value: "true"
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: AppSettings__locale-path
+          value: ""
+        - name: AppSettings__EnableQueryMetricsInDebugFiles
+          value: "false"
+        - name: AppSettings__EnableQueryMetricsWithQueryInDebugFiles
+          value: "false"
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-dataservice-volume
+        - mountPath: /application/bi/dataservice/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: bi-dataservice-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: id-web-service
+  namespace: bold-services
+  labels:
+    app: id-web
+spec:
+  type: NodePort
+  ports:
+  - name: id-web-port
+    port: 6000
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: id-web
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: id-api-service
+  namespace: bold-services
+  labels:
+    app: id-api
+spec:
+  type: NodePort
+  ports:
+  - name: id-api-port
+    port: 6001
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: id-api
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: id-ums-service
+  namespace: bold-services
+  labels:
+    app: id-ums
+spec:
+  type: NodePort
+  ports:
+  - name: id-ums-port
+    port: 6002
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: id-ums
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: bi-web-service
+  namespace: bold-services
+  labels:
+    app: bi-web
+spec:
+  type: NodePort
+  ports:
+  - name: bi-web-port
+    port: 6004
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: bi-web
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: bi-api-service
+  namespace: bold-services
+  labels:
+    app: bi-api
+spec:
+  type: NodePort
+  ports:
+  - name: bi-api-port
+    port: 6005
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: bi-api
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: bi-jobs-service
+  namespace: bold-services
+  labels:
+    app: bi-jobs
+spec:
+  type: NodePort
+  ports:
+  - name: bi-jobs-port
+    port: 6006
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: bi-jobs
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: bi-dataservice-service
+  namespace: bold-services  
+  labels:
+    app: bi-dataservice
+spec:
+  type: NodePort
+  ports:
+  - name: bi-dataservice-port
+    port: 6007
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: bi-dataservice
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: id-web-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: id-web-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: id-api-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: id-api-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: id-ums-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: id-ums-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: bi-web-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: bi-web-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: bi-api-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: bi-api-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: bi-jobs-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: bi-jobs-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: bi-dataservice-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: bi-dataservice-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+              

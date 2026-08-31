@@ -1,0 +1,108 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bold-ingress
+  namespace: bold-services
+  annotations:
+    kubernetes.io/ingress.class: kong
+    konghq.com/connect-timeout: "300000"
+    konghq.com/read-timeout: "300000"
+    konghq.com/write-timeout: "300000"
+    konghq.com/strip-path: "false"
+    konghq.com/request-buffering: "true"
+    konghq.com/response-buffering: "true"
+spec:
+  #tls:
+  #- hosts:
+    #- example.com
+    #secretName: bold-tls
+  rules:
+  - #host: example.com
+    http:
+      paths:
+      - path: /bi/api
+        pathType: Prefix
+        backend:
+          service:
+            name: bi-api-service
+            port:
+              number: 6005
+      - path: /bi/jobs
+        pathType: Prefix
+        backend:
+          service:
+            name: bi-jobs-service
+            port:
+              number: 6006
+      - path: /bi/designer
+        pathType: Prefix
+        backend:
+          service:
+            name: bi-dataservice-service
+            port:
+              number: 6007
+      - path: /bi
+        pathType: Prefix
+        backend:
+          service:
+            name: bi-web-service
+            port:
+              number: 6004
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: id-api-service
+            port:
+              number: 6001
+      - path: /ums
+        pathType: Prefix
+        backend:
+          service:
+            name: id-ums-service
+            port:
+              number: 6002
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: id-web-service
+            port:
+              number: 6000     
+      - path: /aiservice
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: bold-ai-service
+            port:
+              number: 6010
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bold-etl-ingress
+  namespace: bold-services
+  annotations:
+    kubernetes.io/ingress.class: kong
+    konghq.com/strip-path: "true"
+    konghq.com/connect-timeout: "300000"
+    konghq.com/read-timeout: "300000"
+    konghq.com/write-timeout: "300000"
+    konghq.com/request-buffering: "true"
+    konghq.com/response-buffering: "true"
+spec:
+  #tls:
+  #- hosts:
+    #- example.com
+    #secretName: bold-tls
+  rules:
+  - #host: example.com
+    http:
+      paths:
+      - path: /etlservice/
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: bold-etl-service
+            port:
+              number: 6009

@@ -1,0 +1,36 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: efs-sc
+  namespace: bold-services
+provisioner: efs.csi.aws.com
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+ name: bold-fileserver
+ namespace: bold-services
+spec:
+ capacity:
+   storage: 3Gi
+ accessModes:
+ - ReadWriteMany
+ persistentVolumeReclaimPolicy: Retain
+ storageClassName: efs-sc
+ csi:
+   driver: efs.csi.aws.com
+   volumeHandle: <efs_file_system_id>
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+ name: bold-fileserver-claim
+ namespace: bold-services
+spec:
+ accessModes:
+ - ReadWriteMany
+ storageClassName: efs-sc
+ volumeName: bold-fileserver
+ resources:
+   requests:
+     storage: 3Gi

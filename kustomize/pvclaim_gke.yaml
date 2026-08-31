@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+ name: bold-fileserver
+ namespace: bold-services
+spec:
+ capacity:
+   storage: 3Gi
+ accessModes:
+ - ReadWriteMany
+ nfs:
+   path: /<file_share_name>
+   server: <file_share_ip_address>
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+ name: bold-fileserver-claim
+ namespace: bold-services
+spec:
+ accessModes:
+ - ReadWriteMany
+ storageClassName: ""
+ volumeName: bold-fileserver
+ resources:
+   requests:
+     storage: 3Gi

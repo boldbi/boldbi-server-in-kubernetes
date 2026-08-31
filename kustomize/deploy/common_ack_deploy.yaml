@@ -1,0 +1,2432 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bold-services
+---
+apiVersion: v1
+kind: Secret
+metadata:  
+  name: bold-license-key
+  namespace: bold-services
+type: Opaque
+stringData:
+  #  The Bold BI licnece key which you have purchesed.
+  BOLD_SERVICES_UNLOCK_KEY: ""
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: bold-fileserver
+  namespace: bold-services
+  labels:
+    alicloud-pvname: bold-fileserver
+spec:
+  capacity:
+    storage: 3Gi
+  accessModes:
+    - ReadWriteMany
+  csi:
+    driver: nasplugin.csi.alibabacloud.com
+    volumeHandle: bold-fileserver
+    volumeAttributes:
+      server: "<host_name_of_mount_target>"
+      path: "/bold-services"
+  mountOptions:
+  - nolock,tcp,noresvport
+  - vers=3
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: bold-fileserver-claim
+  namespace: bold-services
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 3Gi
+  selector:
+    matchLabels:
+      alicloud-pvname: bold-fileserver
+---
+apiVersion: v1
+kind: Secret
+metadata:  
+  name: bold-user-secret
+  namespace: bold-services
+type: Opaque
+stringData:
+  # It should be a valid email.
+  BOLD_SERVICES_USER_EMAIL: ""
+
+  # It should meet our password requirements.
+  BOLD_SERVICES_USER_PASSWORD: ""
+---
+apiVersion: v1
+kind: Secret
+metadata:  
+  name: bold-db-secret
+  namespace: bold-services
+type: Opaque
+stringData:
+  # Type of database server can be used for configuring the Bold BI. Eg: mssql, mysql, and postgresql.
+  BOLD_SERVICES_DB_TYPE: ""
+
+  # Name of the Database Server
+  BOLD_SERVICES_DB_HOST: ""
+
+  # The system will use the following default port numbers based on the database server type.
+  # PostgrSQL – 5432 and MySQL -3306
+  # Please specify the port number for your database server if it is configured on a different port.
+  # For MS SQL Server, this parameter is not necessary.
+  BOLD_SERVICES_DB_PORT: ""
+
+  # Username for the database server
+  # Please refer to this documentation for information on the user's permissions.
+  # https://help.boldbi.com/embedded-bi/faq/what-are-the-database-permissions-required-to-set-up-bold-bi-embedded/
+  BOLD_SERVICES_DB_USER: ""
+
+  # The database user's password
+  BOLD_SERVICES_DB_PASSWORD: ""
+
+  # If the database name is not specified, the system will create a new database called bold services.
+  # If you specify a database name, it should already exist on the server.
+  BOLD_SERVICES_DB_NAME: ""
+
+  # For PostgreSQL DB Servers, this is an optional parameter.
+  # The system will use the database name postgres by default.
+  # If your database server uses a different default database, please provide it here.
+  BOLD_SERVICES_POSTGRESQL_MAINTENANCE_DB: ""
+
+  # If your database server requires additional connection string parameters, include them here
+  # Connection string parameters can be found in the official document.
+  # My SQL: https://dev.mysql.com/doc/connector-net/en/connector-net-8-0-connection-options.html
+  # PostgreSQL: https://www.npgsql.org/doc/connection-string-parameters.html
+  # MS SQL: https://docs.microsoft.com/en-us/dotnet/api/system.data.sqlclient.sqlconnection.connectionstring
+  # Note: A semicolon(;) should be used to separate multiple parameters.
+  BOLD_SERVICES_DB_ADDITIONAL_PARAMETERS: ""
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: branding-config
+  namespace: bold-services
+# All the branding images variables are accepted as URL.
+# Image type: png, svg, jpg, jpeg
+# Ex: https://example.com/loginlogo.jpg
+data:
+  # This is the header logo for the application, and the preferred image size is 40 x 40 pixels.
+  BOLD_SERVICES_BRANDING_MAIN_LOGO: ""
+  
+  # This is the login logo for the application, and the preferred image size is 200 x 40 pixels.
+  BOLD_SERVICES_BRANDING_LOGIN_LOGO: ""
+  
+  # This is an email logo, and the preferred image size is 200 x 40 pixels.
+  BOLD_SERVICES_BRANDING_EMAIL_LOGO: ""
+  
+  # This is a favicon, and the preferred image size is 40 x 40 pixels.
+  BOLD_SERVICES_BRANDING_FAVICON: ""
+  
+  # This is powered by the logo, and the preferred size is 100 x 25 pixels.
+  BOLD_SERVICES_BRANDING_FOOTER_LOGO: ""
+  
+  # This is organization name.
+  BOLD_SERVICES_SITE_NAME: ""
+  
+  # This is site identifier, and it will be the part of the application URL.
+  BOLD_SERVICES_SITE_IDENTIFIER: ""
+
+  # Note: If you want to use the custom branding, provide the value for all branding variables 
+  # If all variable values are given, application will use the branding images,
+  # otherwise it will take the default logos.
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bold-secret
+  namespace: bold-services
+type: Opaque
+stringData:
+  widget_bing_map_enable_secret: ""
+  widget_bing_map_api_key_secret: ""
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: connection-string
+  namespace: bold-services
+type: Opaque
+stringData:
+  ApplicationInsights_ConnectionString_secret: ""
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: log4net-config
+  namespace: bold-services
+data:
+  Log4Net.config: |
+    <?xml version="1.0" encoding="utf-8" ?>
+    <configuration>
+      <log4net threshold="ALL">
+        <root>
+          <level value="ALL" />
+           <!-- <appender-ref ref="ConsoleAppender" /> -->
+          <appender-ref ref="FILE_DEBUG_APPENDER" />
+          <appender-ref ref="FILE_ERROR_APPENDER" />
+          <appender-ref ref="aiAppender"/>
+        </root>        
+        <!-- === File Appender for NON-ERROR messages file === -->
+        <appender name="FILE_DEBUG_APPENDER" type="log4net.Appender.RollingFileAppender" class="ch.qos.logback.classic.AsyncAppender">
+          <file type="log4net.Util.PatternString" value="%property{AppDataPath}/logs/%property{loggername}/debug-info-%env{HOSTNAME}.txt" />
+          <filter type="log4net.Filter.LevelMatchFilter">
+            <levelToMatch value="INFO" />
+          </filter>
+          <filter type="log4net.Filter.DenyAllFilter" />
+          <additivity value="true" />
+          <appendToFile value="true" />
+          <maxSizeRollBackups value="1" />
+          <maximumFileSize value="300KB" />
+          <rollingStyle value="Size" />
+          <staticLogFileName value="true" />
+          <layout type="log4net.Layout.PatternLayout">
+            <header type="log4net.Util.PatternString" value="#Software: %property{loggername} %newline#Date: %date %newline#Fields: date thread namespace methodname message %newline" />
+            <conversionPattern value="%date	[%thread]	%message%newline" />
+          </layout>
+        </appender>
+        <!-- === File Appender for ERROR messages file === -->
+        <appender name="FILE_ERROR_APPENDER" type="log4net.Appender.RollingFileAppender" class="ch.qos.logback.classic.AsyncAppender">
+          <file type="log4net.Util.PatternString" value="%property{AppDataPath}/logs/%property{loggername}/errors-%env{HOSTNAME}.txt" />
+          <filter type="log4net.Filter.LevelMatchFilter">
+            <levelToMatch value="ERROR" />
+          </filter>
+          <filter type="log4net.Filter.DenyAllFilter" />
+          <additivity value="true" />
+          <appendToFile value="true" />
+          <maxSizeRollBackups value="10" />
+          <maximumFileSize value="100KB" />
+          <rollingStyle value="Size" />
+          <staticLogFileName value="true" />
+          <layout type="log4net.Layout.PatternLayout">
+            <header type="log4net.Util.PatternString" value="#Software: %property{loggername} %newline#Date: %date %newline#Fields: date thread namespace methodname message %newline" />
+            <conversionPattern value="%date	[%thread]	%-5level	%message%newline" />
+          </layout>
+        </appender>
+        <!-- === Console Appender to use in BufferingForwardingAppender === -->
+        <appender name="ConsoleAppender" type="log4net.Appender.ConsoleAppender">
+          <layout type="log4net.Layout.PatternLayout">
+            <conversionPattern type="log4net.Util.PatternString" value="%newline%%-5level  %property{loggername}  %env{HOSTNAME}  %%date	[%%thread]	%%message%newline" />
+          </layout>
+        </appender>
+        <appender name="aiAppender" type="Microsoft.ApplicationInsights.Log4NetAppender.ApplicationInsightsAppender, Microsoft.ApplicationInsights.Log4NetAppender">
+          <layout type="log4net.Layout.PatternLayout">
+            <conversionPattern value="%message%newline" />
+          </layout>
+        </appender>  
+      </log4net>
+    </configuration>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: id-web-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: id-web
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: id-web
+    spec:
+      containers:
+      - name: id-web-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-identity:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+          limits:
+            cpu: 500m
+            memory: 2Gi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: APP_BASE_URL
+          value: <application_base_url>
+        - name: INSTALL_OPTIONAL_LIBS
+          value: "mongodb,mysql,influxdb,snowflake,oracle,clickhouse,google"
+        - name: ID_Version
+          value: "4.2.1"
+        - name: BI_Version
+          value: "16.2.5"
+        - name: Reports_Version
+          value: "14.1.12"
+        - name: Is_Common_IDP
+          value: "true"
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          failureThreshold: 3
+          successThreshold: 1
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: id-web-volume
+        - mountPath: /application/idp/web/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: id-web-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: id-api-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: id-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: id-api
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: id-api-volume
+      containers:
+      - name: id-api-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-identity-api:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+          limits:
+            cpu: 500m
+            memory: 2Gi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          failureThreshold: 5
+          successThreshold: 3
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: id-api-volume
+        - mountPath: /application/idp/api/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: id-api-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: id-ums-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: id-ums
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: id-ums
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: id-ums-volume
+      containers:
+      - name: id-ums-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-ums:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+          limits:
+            cpu: 500m
+            memory: 2Gi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        envFrom:
+        - secretRef:
+              name: bold-user-secret
+        - secretRef:
+              name: bold-db-secret
+        - secretRef:
+              name: bold-license-key
+        - configMapRef:
+              name: branding-config              
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: id-ums-volume
+        - mountPath: /application/idp/ums/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: id-ums-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-web-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-web
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-web
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-web-volume
+      containers:
+      - name: bi-web-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+          limits:
+            cpu: 500m
+            memory: 2Gi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-web-volume
+        - mountPath: /application/bi/web/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: bi-web-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-api-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-api
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-api-volume
+      containers:
+      - name: bi-api-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server-api:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+          limits:
+            cpu: 500m
+            memory: 2Gi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-api-volume
+        - mountPath: /application/bi/api/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: bi-api-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-jobs-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-jobs
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-jobs
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-jobs-volume
+      containers:
+      - name: bi-jobs-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server-jobs:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+          limits:
+            cpu: 500m
+            memory: 2Gi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-jobs-volume
+        - mountPath: /application/bi/jobs/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: bi-jobs-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-dataservice-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-dataservice
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-dataservice
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-dataservice-volume
+      containers:
+      - name: bi-dataservice-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-designer:16.2.5
+        ports:
+        - containerPort: 80
+        env:
+        - name: widget_bing_map_enable
+          valueFrom:
+            secretKeyRef:
+              name: bold-secret
+              key: widget_bing_map_enable_secret
+        - name: widget_bing_map_api_key
+          valueFrom:
+            secretKeyRef:
+              name: bold-secret
+              key: widget_bing_map_api_key_secret
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: AppSettings__locale-path
+          value: ""
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+          limits:
+            cpu: 500m
+            memory: 2Gi
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: bi-dataservice-volume
+        - mountPath: /application/bi/dataservice/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: bi-dataservice-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reports-web-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: reports-web
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: reports-web
+    spec:
+      containers:
+      - name: reports-web-container
+        image: us-docker.pkg.dev/boldreports/multi-container/boldreports-server:14.1.12
+        ports:
+        - containerPort: 80
+        env:
+        - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: connection-string
+              key: ApplicationInsights_ConnectionString_secret
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+          limits:
+            cpu: 500m
+            memory: 2Gi
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: reports-web-volume
+        - mountPath: /application/reporting/web/logs
+          name: log4net-config-volume
+      volumes:
+      - name: reports-web-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reports-api-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: reports-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: reports-api
+    spec:
+      containers:
+      - name: reports-api-container
+        image: us-docker.pkg.dev/boldreports/multi-container/boldreports-server-api:14.1.12
+        ports:
+        - containerPort: 80
+        env:
+        - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: connection-string
+              key: ApplicationInsights_ConnectionString_secret
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+          limits:
+            cpu: 500m
+            memory: 2Gi
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: reports-api-volume
+        - mountPath: /application/reporting/api/logs
+          name: log4net-config-volume
+      volumes:
+      - name: reports-api-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reports-jobs-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: reports-jobs
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: reports-jobs
+    spec:
+      containers:
+      - name: reports-jobs-container
+        image: us-docker.pkg.dev/boldreports/multi-container/boldreports-server-jobs:14.1.12
+        ports:
+        - containerPort: 80
+        env:
+        - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: connection-string
+              key: ApplicationInsights_ConnectionString_secret
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+          limits:
+            cpu: 500m
+            memory: 2Gi
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: reports-jobs-volume
+        - mountPath: /application/reporting/jobs/logs
+          name: log4net-config-volume
+      volumes:
+      - name: reports-jobs-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reports-reportservice-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: reports-reportservice
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: reports-reportservice
+    spec:
+      containers:
+      - name: reports-reportservice-container
+        image: us-docker.pkg.dev/boldreports/multi-container/boldreports-designer:14.1.12
+        ports:
+        - containerPort: 80
+        env:
+        - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: connection-string
+              key: ApplicationInsights_ConnectionString_secret
+        - name: widget_reportsng_map_enable
+          value: ""
+        - name: widget_reportsng_map_api_key
+          value: ""
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+          limits:
+            cpu: 500m
+            memory: 2Gi
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: reports-reportservice-volume
+        - mountPath: /application/reporting/reportservice/logs
+          name: log4net-config-volume
+      volumes:
+      - name: reports-reportservice-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reports-viewer-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: reports-viewer
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: reports-viewer
+    spec:
+      containers:
+      - name: reports-viewer-container
+        image: us-docker.pkg.dev/boldreports/multi-container/boldreports-viewer:14.1.12
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+          limits:
+            cpu: 500m
+            memory: 2Gi
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 40
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /application/app_data
+          name: reports-viewer-volume
+        - mountPath: /application/reporting/viewer/logs
+          name: log4net-config-volume
+      volumes:
+      - name: reports-viewer-volume
+        persistentVolumeClaim:
+          claimName: bold-fileserver-claim
+          readOnly: false
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: id-web-service
+  namespace: bold-services
+  labels:
+    app: id-web
+spec:
+  type: NodePort
+  ports:
+  - name: id-web-port
+    port: 6000
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: id-web
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: id-api-service
+  namespace: bold-services
+  labels:
+    app: id-api
+spec:
+  type: NodePort
+  ports:
+  - name: id-api-port
+    port: 6001
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: id-api
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: id-ums-service
+  namespace: bold-services
+  labels:
+    app: id-ums
+spec:
+  type: NodePort
+  ports:
+  - name: id-ums-port
+    port: 6002
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: id-ums
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: bi-web-service
+  namespace: bold-services
+  labels:
+    app: bi-web
+spec:
+  type: NodePort
+  ports:
+  - name: bi-web-port
+    port: 6004
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: bi-web
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: bi-api-service
+  namespace: bold-services
+  labels:
+    app: bi-api
+spec:
+  type: NodePort
+  ports:
+  - name: bi-api-port
+    port: 6005
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: bi-api
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: bi-jobs-service
+  namespace: bold-services
+  labels:
+    app: bi-jobs
+spec:
+  type: NodePort
+  ports:
+  - name: bi-jobs-port
+    port: 6006
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: bi-jobs
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: bi-dataservice-service
+  namespace: bold-services  
+  labels:
+    app: bi-dataservice
+spec:
+  type: NodePort
+  ports:
+  - name: bi-dataservice-port
+    port: 6007
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: bi-dataservice
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reports-web-service
+  namespace: bold-services
+  labels:
+    app: reports-web
+spec:
+  type: NodePort
+  ports:
+  - name: reports-web-port
+    port: 6550
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: reports-web
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: reports-api-service
+  namespace: bold-services
+  labels:
+    app: reports-api
+spec:
+  type: NodePort
+  ports:
+  - name: reports-api-port
+    port: 6551
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: reports-api
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: reports-jobs-service
+  namespace: bold-services
+  labels:
+    app: reports-jobs
+spec:
+  type: NodePort
+  ports:
+  - name: reports-jobs-port
+    port: 6552
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: reports-jobs
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: reports-reportservice-service
+  namespace: bold-services  
+  labels:
+    app: reports-reportservice
+spec:
+  type: NodePort
+  ports:
+  - name: reports-reportservice-port
+    port: 6553
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: reports-reportservice
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reports-viewer-service
+  namespace: bold-services  
+  labels:
+    app: reports-viewer
+spec:
+  type: NodePort
+  ports:
+  - name: reports-viewer-port
+    port: 6554
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: reports-viewer
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: id-web-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: id-web-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: id-api-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: id-api-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: id-ums-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: id-ums-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: bi-web-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: bi-web-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: bi-api-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: bi-api-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: bi-jobs-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: bi-jobs-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: bi-dataservice-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: bi-dataservice-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: reports-web-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reports-web-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: reports-api-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reports-api-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: reports-jobs-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reports-jobs-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: reports-reportservice-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reports-reportservice-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: reports-viewer-hpa
+  namespace: bold-services
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reports-viewer-deployment
+  minReplicas: 1
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bold-ingress
+  namespace: bold-services
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    nginx.ingress.kubernetes.io/proxy-buffers: "4 256k"
+    nginx.ingress.kubernetes.io/proxy-busy-buffers-size: "256k"
+    nginx.ingress.kubernetes.io/large-client-header-buffers: "4 16k"
+    nginx.ingress.kubernetes.io/fastcgi-buffers: "16 16k"
+    nginx.ingress.kubernetes.io/fastcgi-buffer-size: "32k"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+    nginx.ingress.kubernetes.io/session-cookie-name: "bold.k8s.pod.id"
+    nginx.ingress.kubernetes.io/session-cookie-max-age: "600"
+    nginx.ingress.kubernetes.io/proxy-body-size: 200m
+    nginx.ingress.kubernetes.io/server-snippet: |      
+      client_max_body_size 200m;
+      set $bold_namespace "bold-services";
+      
+      location ~* "^/bi/api(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/biapi6005/bi/api(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-bi-api-service-6005";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/biapi6005/bi/api(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+      
+      location ~* "^/bi/jobs(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/bijobs6006/bi/jobs(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-bi-jobs-service-6006";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/bijobs6006/bi/jobs(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+      
+      location ~* "^/bi/designer(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/bidataservice6007(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-bi-dataservice-service-6007";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/bidataservice6007(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+      
+      location ~* "^/bi(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/biweb6004/bi(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-bi-web-service-6004";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/biweb6004/bi(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;        
+      }
+      
+      location ~* "^/reporting/api(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/reportsapi6551/reporting/api(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-reports-api-service-6551";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/reportsapi6551/reporting/api(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+      
+      location ~* "^/reporting/jobs(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/reportsjobs6552/reporting/jobs(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-reports-jobs-service-6552";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/reportsjobs6552/reporting/jobs(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+      
+      location ~* "^/reporting/reportservice(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/reportsdesigner6553/reportservice(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-reports-reportservice-service-6553";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/reportsdesigner6553/reportservice(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+      
+      location ~* "^/reporting/viewer(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/reportsviewer6554/reporting/viewer(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-reports-viewer-service-6554";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/reportsviewer6554/reporting/viewer(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+      
+      location ~* "^/reporting(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/reportsweb6550/reporting(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-reports-web-service-6550";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/reportsweb6550/reporting(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;        
+      }
+      
+      location ~* "^/api(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/idapi6001/api(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-id-api-service-6001";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/idapi6001/api(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+      
+      location ~* "^/ums(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/idums6002/ums(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-id-ums-service-6002";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/idums6002/ums(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+spec:
+  #tls:
+  #- hosts:
+    #- example.com
+    #secretName: bold-tls
+  rules:
+  - #host: example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: id-web-service
+            port:
+              number: 6000   
+      
+      - path: /idapi6001(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: id-api-service
+            port:
+              number: 6001   
+          
+      - path: /idums6002(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: id-ums-service
+            port:
+              number: 6002   
+                    
+      - path: /biweb6004(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: bi-web-service
+            port:
+              number: 6004   
+          
+      - path: /biapi6005(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: bi-api-service
+            port:
+              number: 6005  
+          
+      - path: /bijobs6006(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: bi-jobs-service
+            port:
+              number: 6006
+          
+      - path: /bidataservice6007(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: bi-dataservice-service
+            port:
+              number: 6007
+          
+      - path: /reportsweb6550(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: reports-web-service
+            port:
+              number: 6550
+          
+      - path: /reportsapi6551(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: reports-api-service
+            port:
+              number: 6551
+          
+      - path: /reportsjobs6552(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: reports-jobs-service
+            port:
+              number: 6552
+          
+      - path: /reportsdesigner6553(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: reports-reportservice-service
+            port:
+              number: 6553
+
+      - path: /reportsviewer6554(/|$)(.*)
+        pathType: Prefix 
+        backend:
+          service:
+            name: reports-viewer-service
+            port: 
+              number: 6554

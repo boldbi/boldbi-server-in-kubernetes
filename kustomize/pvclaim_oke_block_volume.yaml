@@ -1,0 +1,22 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: bold-storageclass
+  namespace: bold-services
+provisioner: blockvolume.csi.oraclecloud.com
+reclaimPolicy: Retain
+parameters:
+  type: "oci-bv"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bold-fileserver-claim
+  namespace: bold-services
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: bold-storageclass
+  resources:
+    requests:
+      storage: 50Gi

@@ -1,0 +1,94 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bold-ingress
+  namespace: bold-services
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/certificate-arn:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: instance
+    alb.ingress.kubernetes.io/backend-protocol: HTTP
+    alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=432000
+    alb.ingress.kubernetes.io/session-cookie-name: "bold.k8s.pod.id"
+    alb.ingress.kubernetes.io/session-cookie-max-age: "432000"
+    alb.ingress.kubernetes.io/session-cookie-expires: "200"
+    alb.ingress.kubernetes.io/auth-session-timeout: "600"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/load-balancer-attributes: deletion_protection.enabled=true
+    alb.ingress.kubernetes.io/success-codes: 200,404
+    alb.ingress.kubernetes.io/healthcheck-path: /health-check
+spec:
+   ingressClassName: "alb"
+   # tls:
+  # - hosts:
+    # - example.com
+    # secretName: boldreports-tls
+rules:
+  - #host: example.com
+     http:
+      paths:
+      - path: "/etlservice/*"
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: bold-etl-service
+            port:
+              number: 6009
+      - path: "/bi/api/*"
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: bi-api-service
+            port:
+              number: 6005
+      - path: "/bi/jobs/*"
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: bi-jobs-service
+            port:
+              number: 6006
+      - path: "/bi/designer/*"
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: bi-dataservice-service
+            port:
+              number: 6007
+      - path: "/bi/*"
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: bi-web-service
+            port:
+              number: 6004
+      - path: "/api/*"
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: id-api-service
+            port:
+              number: 6001
+      - path: "/ums/*"
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: id-ums-service
+            port:
+              number: 6002
+      - path: "/*"
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: id-web-service
+            port:
+              number: 6000
+      - path: "/aiservice/*"
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: bold-ai-service
+            port:
+              number: 6010

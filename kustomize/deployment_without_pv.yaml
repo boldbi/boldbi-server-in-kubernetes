@@ -1,0 +1,568 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: id-web-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: id-web
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: id-web
+    spec:
+      containers:
+      - name: id-web-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-identity:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: APP_BASE_URL
+          value: <application_base_url>
+        - name: BOLD_SERVICES_PV_USED
+          value: "false"
+        - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: bold-secret
+              key: application_insights_connection_string_secret
+        envFrom:
+        - secretRef:
+            name: azure-blob-storage-secret
+            optional: true
+        - secretRef:
+            name: oci-storage-secret
+            optional: true
+        - secretRef:
+            name: aws-s3-storage-secret
+            optional: true
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/idp/web/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: id-api-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: id-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: id-api
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
+      containers:
+      - name: id-api-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-identity-api:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: BOLD_SERVICES_PV_USED
+          value: "false"
+        envFrom:
+        - secretRef:
+            name: azure-blob-storage-secret
+            optional: true
+        - secretRef:
+            name: oci-storage-secret
+            optional: true
+        - secretRef:
+            name: aws-s3-storage-secret
+            optional: true
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/idp/api/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: id-ums-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: id-ums
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: id-ums
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
+        volumeMounts:
+      containers:
+      - name: id-ums-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-ums:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: BOLD_SERVICES_USE_SITE_IDENTIFIER
+          value: "true"
+        - name: BOLD_SERVICES_PV_USED
+          value: "false"
+        envFrom:
+        - secretRef:
+              name: bold-user-secret
+        - secretRef:
+              name: bold-db-secret
+        - secretRef:
+              name: bold-license-key
+        - configMapRef:
+              name: branding-config
+              optional: true
+        - secretRef:
+            name: azure-blob-storage-secret
+            optional: true
+        - secretRef:
+            name: oci-storage-secret
+            optional: true
+        - secretRef:
+            name: aws-s3-storage-secret
+            optional: true
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/idp/ums/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-web-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-web
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-web
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
+      containers:
+      - name: bi-web-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: BOLD_SERVICES_PV_USED
+          value: "false"
+        envFrom:
+        - secretRef:
+            name: azure-blob-storage-secret
+            optional: true
+        - secretRef:
+            name: oci-storage-secret
+            optional: true
+        - secretRef:
+            name: aws-s3-storage-secret
+            optional: true
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/bi/web/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-api-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-api
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
+      containers:
+      - name: bi-api-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server-api:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: BOLD_SERVICES_PV_USED
+          value: "false"
+        envFrom:
+        - secretRef:
+            name: azure-blob-storage-secret
+            optional: true
+        - secretRef:
+            name: oci-storage-secret
+            optional: true
+        - secretRef:
+            name: aws-s3-storage-secret
+            optional: true
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/bi/api/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-jobs-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-jobs
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-jobs
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
+      containers:
+      - name: bi-jobs-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server-jobs:16.2.5
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: BOLD_SERVICES_PV_USED
+          value: "false"
+        envFrom:
+        - secretRef:
+            name: azure-blob-storage-secret
+            optional: true
+        - secretRef:
+            name: oci-storage-secret
+            optional: true
+        - secretRef:
+            name: aws-s3-storage-secret
+            optional: true
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/bi/jobs/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bi-dataservice-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bi-dataservice
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bi-dataservice
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
+      containers:
+      - name: bi-dataservice-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-designer:16.2.5
+        ports:
+        - containerPort: 80
+        env:
+        - name: INSTALL_OPTIONAL_LIBS
+          value: "mongodb,mysql,influxdb,snowflake,oracle,clickhouse,google"
+        - name: widget_bing_map_enable
+          valueFrom:
+            secretKeyRef:
+              name: bold-secret
+              key: widget_bing_map_enable_secret
+        - name: widget_bing_map_api_key
+          valueFrom:
+            secretKeyRef:
+              name: bold-secret
+              key: widget_bing_map_api_key_secret
+        - name: AppSettings__CustomSizePDFExport
+          value: "true"
+        - name: AppSettings__BrowserTimezone
+          value: "true"
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: AppSettings__locale-path
+          value: ""
+        - name: AppSettings__EnableQueryMetricsInDebugFiles
+          value: "false"
+        - name: AppSettings__EnableQueryMetricsWithQueryInDebugFiles
+          value: "false"
+        - name: BOLD_SERVICES_PV_USED
+          value: "false"
+        envFrom:
+        - secretRef:
+            name: azure-blob-storage-secret
+            optional: true
+        - secretRef:
+            name: oci-storage-secret
+            optional: true
+        - secretRef:
+            name: aws-s3-storage-secret
+            optional: true
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/bi/dataservice/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bold-etl-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bold-etl
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bold-etl
+    spec:
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
+      containers:
+      - name: bold-etl-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-etl:16.2.5
+        ports:
+        - containerPort: 80
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: BOLD_SERVICES_PV_USED
+          value: "false"
+        envFrom:
+        - secretRef:
+            name: azure-blob-storage-secret
+            optional: true
+        - secretRef:
+            name: oci-storage-secret
+            optional: true
+        - secretRef:
+            name: aws-s3-storage-secret
+            optional: true
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/etl/etlservice/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bold-ai-deployment
+  namespace: bold-services
+spec:
+  selector:
+    matchLabels:
+      app: bold-ai
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bold-ai
+    spec:
+      imagePullSecrets:
+        - name: dev-art-reg-key
+      initContainers:
+      - name: id-web-initialization
+        image: busybox:1.28
+        command: ["/bin/sh","-c"]
+        args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
+      containers:
+      - name: bold-ai-container
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-ai:16.2.5
+        ports:
+        - containerPort: 8080
+        env:
+        - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
+          value: k8s
+        - name: BOLD_SERVICES_PV_USED
+          value: "false"
+        envFrom:
+        - secretRef:
+            name: azure-blob-storage-secret
+            optional: true
+        - secretRef:
+            name: oci-storage-secret
+            optional: true
+        - secretRef:
+            name: aws-s3-storage-secret
+            optional: true
+        resources:
+          requests:
+            cpu: 250m
+            memory: 750Mi
+        readinessProbe:
+          httpGet:
+            path: /health-check
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /application/ai/aiservice/logs/k8s
+          name: log4net-config-volume
+      volumes:
+      - name: log4net-config-volume
+        configMap:
+          name: log4net-config

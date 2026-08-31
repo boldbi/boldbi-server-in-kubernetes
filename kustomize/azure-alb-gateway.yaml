@@ -1,0 +1,100 @@
+piVersion: alb.networking.azure.io/v1
+kind: RoutePolicy
+metadata:
+  name: bold-affinity-policy
+  namespace: bold-services
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: bold-main-route
+  default:
+    timeouts:
+      request: 300s
+    sessionAffinity:
+      affinityType: application-cookie
+      cookieName: bold.k8s.pod.id
+      cookieDuration: 3600s
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: bold-main-route
+  namespace: bold-services
+spec:
+#   hostnames:
+#   - "example.com"
+  parentRefs:
+    - name: <gateway-name>          # e.g., appgw-gateway
+      namespace: <gateway-namespace> # e.g., default
+      sectionName: <listener-name>         # Azure ALB Listener name (http or https)
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /bi/api
+    backendRefs:
+    - name: bi-api-service
+      port: 6005
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /bi/jobs
+    backendRefs:
+    - name: bi-jobs-service
+      port: 6006
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /bi/designer
+    backendRefs:
+    - name: bi-dataservice-service
+      port: 6007
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /bi
+    backendRefs:
+    - name: bi-web-service
+      port: 6004
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /api
+    backendRefs:
+    - name: id-api-service
+      port: 6001
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /ums
+    backendRefs:
+    - name: id-ums-service
+      port: 6002
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: id-web-service
+      port: 6000
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /aiservice
+    backendRefs:
+    - name: bold-ai-service
+      port: 6010
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /etlservice
+    backendRefs:
+    - name: bold-etl-service
+      port: 6009
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: /

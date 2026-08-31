@@ -1,0 +1,631 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bold-ingress
+  namespace: bold-services
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    nginx.ingress.kubernetes.io/proxy-buffers: "4 256k"
+    nginx.ingress.kubernetes.io/proxy-busy-buffers-size: "256k"
+    nginx.ingress.kubernetes.io/large-client-header-buffers: "4 16k"
+    nginx.ingress.kubernetes.io/fastcgi-buffers: "16 16k"
+    nginx.ingress.kubernetes.io/fastcgi-buffer-size: "32k"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+    nginx.ingress.kubernetes.io/session-cookie-name: "bold.k8s.pod.id"
+    nginx.ingress.kubernetes.io/session-cookie-max-age: "600"
+    nginx.ingress.kubernetes.io/proxy-body-size: 200m
+    nginx.ingress.kubernetes.io/server-snippet: |      
+      client_max_body_size 200m;
+      set $bold_namespace "bold-services";
+      
+      location ~* "^/bi/api(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/biapi6005/bi/api(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-bi-api-service-6005";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/biapi6005/bi/api(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+      
+      location ~* "^/bi/jobs(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/bijobs6006/bi/jobs(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-bi-jobs-service-6006";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/bijobs6006/bi/jobs(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+      
+      location ~* "^/bi/designer(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/bidataservice6007(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-bi-dataservice-service-6007";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/bidataservice6007(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+      location ~* "^/etlservice(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/etlservice(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-bold-etl-service-6009";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/etlservice(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+ 
+      location ~* "^/bi(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/biweb6004/bi(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-bi-web-service-6004";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/biweb6004/bi(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;        
+      }
+      
+      location ~* "^/api(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/idapi6001/api(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-id-api-service-6001";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/idapi6001/api(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+      
+      location ~* "^/ums(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/idums6002/ums(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-id-ums-service-6002";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/idums6002/ums(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+      location ~* "^/aiservice(/|$)(.*)" {
+        set $namespace      $bold_namespace;
+        set $ingress_name   "bold-ingress";
+        set $service_name   "";
+        set $service_port   "";
+        set $location_path  "/aiservice(/|${literal_dollar})(.*)";
+        rewrite_by_lua_block {
+                lua_ingress.rewrite({
+                        force_ssl_redirect = false,
+                        ssl_redirect = true,
+                        force_no_ssl_redirect = false,
+                        use_port_in_redirects = false,
+                })
+                balancer.rewrite()
+                plugins.run()
+        }
+        header_filter_by_lua_block {
+                lua_ingress.header()
+                plugins.run()
+        }
+        body_filter_by_lua_block {
+        }
+        log_by_lua_block {
+                balancer.log()
+                monitor.call()
+                plugins.run()
+        }
+        port_in_redirect off;
+        set $balancer_ewma_score -1;
+        set $proxy_upstream_name "${bold_namespace}-bold-ai-service-6010";
+        set $proxy_host          $proxy_upstream_name;
+        set $pass_access_scheme  $scheme;
+        set $pass_server_port    $server_port;
+        set $best_http_host      $http_host;
+        set $pass_port           $pass_server_port;
+        set $proxy_alternative_upstream_name "";
+        proxy_set_header Host                   $best_http_host;
+        proxy_set_header                        Upgrade           $http_upgrade;
+        proxy_set_header                        Connection        $connection_upgrade;
+        proxy_set_header X-Request-ID           $req_id;
+        proxy_set_header X-Real-IP              $remote_addr;
+        proxy_set_header X-Forwarded-For        $remote_addr;
+        proxy_set_header X-Forwarded-Host       $best_http_host;
+        proxy_set_header X-Forwarded-Port       $pass_port;
+        proxy_set_header X-Forwarded-Proto      $pass_access_scheme;
+        proxy_set_header X-Scheme               $pass_access_scheme;
+        proxy_set_header X-Original-Forwarded-For $http_x_forwarded_for;
+        proxy_set_header Proxy                  "";
+        proxy_connect_timeout                   300s;
+        proxy_send_timeout                      300s;
+        proxy_read_timeout                      300s;
+        proxy_buffering                         off;
+        proxy_buffer_size                       4k;
+        proxy_buffers                           4 4k;
+        proxy_max_temp_file_size                1024m;
+        proxy_request_buffering                 on;
+        proxy_http_version                      1.1;
+        proxy_cookie_domain                     off;
+        proxy_cookie_path                       off;
+        proxy_next_upstream                     error timeout;
+        proxy_next_upstream_timeout             0;
+        proxy_next_upstream_tries               3;
+        rewrite "(?i)/aiservice(/|$)(.*)" /$2 break;
+        proxy_pass http://upstream_balancer;
+        proxy_redirect                          off;
+      }
+spec:
+  #tls:
+  #- hosts:
+    #- example.com
+    #secretName: bold-tls
+  rules:
+  - #host: example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: id-web-service
+            port:
+              number: 6000       
+      - path: /idapi6001(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: id-api-service
+            port:
+              number: 6001
+      - path: /idums6002(/|$)(.*)
+        pathType: Prefix     
+        backend:
+          service:
+            name: id-ums-service
+            port:
+              number: 6002      
+      - path: /biweb6004(/|$)(.*)
+        pathType: Prefix      
+        backend:
+          service:
+            name: bi-web-service
+            port:
+              number: 6004     
+      - path: /biapi6005(/|$)(.*)
+        pathType: Prefix     
+        backend:
+          service:
+            name: bi-api-service
+            port:
+              number: 6005         
+      - path: /bijobs6006(/|$)(.*)
+        pathType: Prefix      
+        backend:
+          service:
+            name: bi-jobs-service
+            port:
+              number: 6006      
+      - path: /bidataservice6007(/|$)(.*)
+        pathType: Prefix      
+        backend:
+          service:
+            name: bi-dataservice-service
+            port:
+              number: 6007
+      - path: /boldetl/(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: bold-etl-service
+            port:
+              number: 6009
+      - path: /aiservice(/|$)(.*)
+        pathType: Prefix      
+        backend:
+          service:
+            name: bold-ai-service
+            port:
+              number: 6010

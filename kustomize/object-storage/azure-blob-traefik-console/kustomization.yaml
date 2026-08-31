@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: bold-services
+
+resources:
+  - ../../base
+  - ../../../deploy/deployment_without_pv.yaml
+  - ../../../deploy/azure_blob_storage_secret.yaml
+  - ../../../deploy/log4net_config_console.yaml
+  - ../../../deploy/traefik.yaml

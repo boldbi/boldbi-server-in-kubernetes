@@ -1,0 +1,152 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: id-web-service
+  namespace: bold-services
+  labels:
+    app: id-web
+spec:
+  type: ClusterIP
+  ports:
+  - name: id-web-port
+    port: 6000
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: id-web
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: id-api-service
+  namespace: bold-services
+  labels:
+    app: id-api
+spec:
+  type: ClusterIP
+  ports:
+  - name: id-api-port
+    port: 6001
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: id-api
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: id-ums-service
+  namespace: bold-services
+  labels:
+    app: id-ums
+spec:
+  type: ClusterIP
+  ports:
+  - name: id-ums-port
+    port: 6002
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: id-ums
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: bi-web-service
+  namespace: bold-services
+  labels:
+    app: bi-web
+spec:
+  type: ClusterIP
+  ports:
+  - name: bi-web-port
+    port: 6004
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: bi-web
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: bi-api-service
+  namespace: bold-services
+  labels:
+    app: bi-api
+spec:
+  type: ClusterIP
+  ports:
+  - name: bi-api-port
+    port: 6005
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: bi-api
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: bi-jobs-service
+  namespace: bold-services
+  labels:
+    app: bi-jobs
+spec:
+  type: ClusterIP
+  ports:
+  - name: bi-jobs-port
+    port: 6006
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: bi-jobs
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: bi-dataservice-service
+  namespace: bold-services  
+  labels:
+    app: bi-dataservice
+spec:
+  type: ClusterIP
+  ports:
+  - name: bi-dataservice-port
+    port: 6007
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: bi-dataservice
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bold-etl-service
+  namespace: bold-services  
+  labels:
+    app: bold-etl
+spec:
+  type: ClusterIP
+  ports:
+  - name: bold-etl-port
+    port: 6009
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: bold-etl
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bold-ai-service
+  namespace: bold-services  
+  labels:
+    app: bold-ai
+spec:
+  type: ClusterIP
+  ports:
+  - name: bold-ai-port
+    port: 6010
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: bold-ai
