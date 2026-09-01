@@ -729,6 +729,19 @@ entries:
     urls:
     - https://boldbi.github.io/boldbi-server-in-kubernetes/bold-common-16.2.5.tgz
     version: 16.2.5
+  - apiVersion: v2
+    appVersion: 16.3.5
+    created: "2022-04-11T13:06:57.5032264+05:30"
+    description: Embed powerful analytics inside your apps and turn your customers
+      into success stories with built-in intelligence features.
+    digest: 35484164986676650f974bd6ff7ceaa191ba057d76c1ec790d4dc02876096d78
+    home: https://www.boldbi.com/
+    icon: https://website-assets.boldbi.com/wp-content/uploads/2019/05/boldbi-header-menu-logo.svg
+    name: bold-common
+    type: application
+    urls:
+    - https://boldbi.github.io/boldbi-server-in-kubernetes/bold-common-16.3.5.tgz
+    version: 16.3.5
   boldbi:
   - apiVersion: v2
     appVersion: 15.2.6
@@ -795,6 +808,19 @@ entries:
     urls:
     - https://boldbi.github.io/boldbi-server-in-kubernetes/boldbi-16.2.5.tgz
     version: 16.2.5
+  - apiVersion: v2
+    appVersion: 16.3.5
+    created: "2022-04-11T13:06:57.6150424+05:30"
+    description: Embed powerful analytics inside your apps and turn your customers
+      into success stories with built-in intelligence features.
+    digest: 4b1db9c3d491326af276dd259d723972a43e37c824e13920225614318b85628d
+    home: https://www.boldbi.com/
+    icon: https://website-assets.boldbi.com/wp-content/uploads/2019/05/boldbi-header-menu-logo.svg
+    name: boldbi
+    type: application
+    urls:
+    - https://boldbi.github.io/boldbi-server-in-kubernetes/boldbi-16.3.5.tgz
+    version: 16.3.5
   - apiVersion: v2
     appVersion: 15.3.8
     created: "2022-04-11T13:06:57.6150424+05:30"
