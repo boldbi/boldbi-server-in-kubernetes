@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: id-web-container
-        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-identity:16.2.5
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-identity:16.3.5
         ports:
         - containerPort: 80
         resources:
@@ -81,7 +81,7 @@ spec:
         args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
       containers:
       - name: id-api-container
-        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-identity-api:16.2.5
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-identity-api:16.3.5
         ports:
         - containerPort: 80
         resources:
@@ -141,7 +141,7 @@ spec:
         volumeMounts:
       containers:
       - name: id-ums-container
-        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-ums:16.2.5
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-ums:16.3.5
         ports:
         - containerPort: 80
         resources:
@@ -211,7 +211,7 @@ spec:
         args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
       containers:
       - name: bi-web-container
-        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server:16.2.5
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server:16.3.5
         ports:
         - containerPort: 80
         resources:
@@ -270,7 +270,7 @@ spec:
         args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
       containers:
       - name: bi-api-container
-        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server-api:16.2.5
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server-api:16.3.5
         ports:
         - containerPort: 80
         resources:
@@ -329,7 +329,7 @@ spec:
         args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
       containers:
       - name: bi-jobs-container
-        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server-jobs:16.2.5
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-server-jobs:16.3.5
         ports:
         - containerPort: 80
         resources:
@@ -388,7 +388,7 @@ spec:
         args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
       containers:
       - name: bi-dataservice-container
-        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-designer:16.2.5
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/boldbi-designer:16.3.5
         ports:
         - containerPort: 80
         env:
@@ -469,7 +469,7 @@ spec:
         args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
       containers:
       - name: bold-etl-container
-        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-etl:16.2.5
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-etl:16.3.5
         ports:
         - containerPort: 80
         env:
@@ -530,7 +530,7 @@ spec:
         args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
       containers:
       - name: bold-ai-container
-        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-ai:16.2.5
+        image: us-docker.pkg.dev/boldbi-294612/boldbi/bold-ai:16.3.5
         ports:
         - containerPort: 8080
         env:
