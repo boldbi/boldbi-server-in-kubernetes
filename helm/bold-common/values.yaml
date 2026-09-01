@@ -110,7 +110,7 @@ imagePullSecrets: []
 
 versions:
 
-  idp: 5.1.23
+  idp: 5.1.24
   bi: 16.3.5
   reports: 14.1.18
 

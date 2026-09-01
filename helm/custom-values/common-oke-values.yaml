@@ -69,7 +69,7 @@ image:
 imagePullSecrets: []
 
 versions:
-  idp: "4.19.1"
+  idp: "5.1.24"
   bi: "16.3.5"
   reports: "14.1.18"
 
