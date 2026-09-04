@@ -25,7 +25,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-    {{- if .Values.loadBalancer.affinityCookie.enable }}
+    {{- if $.Values.loadBalancer.affinityCookie.enable }}
     nginx.ingress.kubernetes.io/affinity: cookie
     nginx.ingress.kubernetes.io/session-cookie-hash: sha1
     nginx.ingress.kubernetes.io/session-cookie-name: "bold.k8s.pod.id"
@@ -64,7 +64,7 @@ spec:
     {{- end }}
       http:
         paths:
-          {{- if not .Values.subApplication.subPath }}
+          {{- if not $.Values.subApplication.subPath }}
           - path: /boldservices
           {{- else }}
           - path: /{{ $.Values.subApplication.subPath }}
@@ -83,7 +83,7 @@ spec:
               servicePort: 6000
               {{- end }}
 
-          {{- if not .Values.subApplication.subPath }}
+          {{- if not $.Values.subApplication.subPath }}
           - path: /boldservices/api/*
           {{- else }}    
           - path: /{{ $.Values.subApplication.subPath }}/api/*
@@ -102,7 +102,7 @@ spec:
               servicePort: 6001
               {{- end }}
 
-          {{- if not .Values.subApplication.subPath }}
+          {{- if not $.Values.subApplication.subPath }}
           - path: /boldservices/ums/*
           {{- else }}
           - path: /{{ $.Values.subApplication.subPath }}/ums/*
@@ -121,7 +121,7 @@ spec:
               servicePort: 6002
               {{- end }}
 
-          {{- if not .Values.subApplication.subPath }}
+          {{- if not $.Values.subApplication.subPath }}
           - path: /boldservices/bi/*
           {{- else }}        
           - path: /{{ $.Values.subApplication.subPath }}/bi/*
@@ -140,7 +140,7 @@ spec:
               servicePort: 6004
               {{- end }}
 
-          {{- if not .Values.subApplication.subPath }}
+          {{- if not $.Values.subApplication.subPath }}
           - path: /boldservices/bi/api/*
           {{- else }}        
           - path: /{{ $.Values.subApplication.subPath }}/bi/api/*
@@ -159,7 +159,7 @@ spec:
               servicePort: 6005
               {{- end }}
 
-          {{- if not .Values.subApplication.subPath }}
+          {{- if not $.Values.subApplication.subPath }}
           - path: /boldservices/bi/jobs/*
           {{- else }}        
           - path: /{{ $.Values.subApplication.subPath }}/bi/jobs/*
@@ -178,7 +178,7 @@ spec:
               servicePort: 6006
               {{- end }}
 
-          {{- if not .Values.subApplication.subPath }}
+          {{- if not $.Values.subApplication.subPath }}
           - path: /boldservices/bi/designer/*
           {{- else }}        
           - path: /{{ $.Values.subApplication.subPath }}/bi/designer/*
@@ -196,7 +196,7 @@ spec:
               serviceName: bi-dataservice-service
               servicePort: 6007
               {{- end }}
-          {{- if not .Values.subApplication.subPath }}
+          {{- if not $.Values.subApplication.subPath }}
           - path: /boldservices/aiservice/*
             {{- if $ingressSupportsPathType }}
           {{- else }}        
@@ -214,6 +214,26 @@ spec:
               serviceName: bold-ai-service
               servicePort: 6010
               {{- end }}
+          {{- if $.Values.upgradeCenter.enabled }}
+          {{- if not $.Values.subApplication.subPath }}
+          - path: /boldservices{{ $.Values.upgradeCenter.ingressPath }}/*
+          {{- else }}
+          - path: /{{ $.Values.subApplication.subPath }}/upgrade-center/*
+          {{- end }}
+            {{- if $ingressSupportsPathType }}
+            pathType: {{ $ingressPathType }}
+            {{- end }}
+            backend:
+              {{- if $ingressApiIsStable }}
+              service:
+                name: boldbi-upgrade-center
+                port:
+                  number: 80
+              {{- else }}
+              serviceName: boldbi-upgrade-center
+              servicePort: 80
+              {{- end }}
+          {{- end }}
   {{- end }}
   {{- end }}
   {{- else }}
@@ -222,7 +242,7 @@ spec:
     {{- end }}
       http:
         paths:
-          {{- if not .Values.subApplication.subPath }}
+          {{- if not $.Values.subApplication.subPath }}
           - path: /boldservices
           {{- else }}
           - path: /{{ $.Values.subApplication.subPath }}
@@ -241,7 +261,7 @@ spec:
               servicePort: 6000
               {{- end }}
 
-          {{- if not .Values.subApplication.subPath }}              
+          {{- if not $.Values.subApplication.subPath }}              
           - path: /boldservices/api/*
           {{- else }}
           - path: /{{ $.Values.subApplication.subPath }}/api/*
@@ -260,7 +280,7 @@ spec:
               servicePort: 6001
               {{- end }}
 
-          {{- if not .Values.subApplication.subPath }}   
+          {{- if not $.Values.subApplication.subPath }}   
           - path: /boldservices/ums/*
           {{- else }}          
           - path: /{{ $.Values.subApplication.subPath }}/ums/*
@@ -279,7 +299,7 @@ spec:
               servicePort: 6002
               {{- end }}
 
-          {{- if not .Values.subApplication.subPath }}              
+          {{- if not $.Values.subApplication.subPath }}              
           - path: /boldservices/bi/*
           {{- else }}        
           - path: /{{ $.Values.subApplication.subPath }}/bi/*
@@ -298,7 +318,7 @@ spec:
               servicePort: 6004
               {{- end }}
 
-          {{- if not .Values.subApplication.subPath }}              
+          {{- if not $.Values.subApplication.subPath }}              
           - path: /boldservices/bi/api/*
           {{- else }}        
           - path: /{{ $.Values.subApplication.subPath }}/bi/api/*
@@ -317,7 +337,7 @@ spec:
               servicePort: 6005
               {{- end }}
 
-          {{- if not .Values.subApplication.subPath }}              
+          {{- if not $.Values.subApplication.subPath }}              
           - path: /boldservices/bi/jobs/*
           {{- else }}        
           - path: /{{ $.Values.subApplication.subPath }}/bi/jobs/*
@@ -336,7 +356,7 @@ spec:
               servicePort: 6006
               {{- end }}
               
-          {{- if not .Values.subApplication.subPath }}  
+          {{- if not $.Values.subApplication.subPath }}  
           - path: /boldservices/bi/designer/*
           {{- else }}        
           - path: /{{ $.Values.subApplication.subPath }}/bi/designer/*
@@ -355,7 +375,7 @@ spec:
               servicePort: 6007
               {{- end }}
           
-          {{- if not .Values.subApplication.subPath }}
+          {{- if not $.Values.subApplication.subPath }}
           - path: /boldservices/aiservice/*
           {{- else }}
           - path: /{{ $.Values.subApplication.subPath }}/aiservice/*
@@ -373,6 +393,26 @@ spec:
               serviceName: bold-ai-service
               servicePort: 6010
               {{- end }}
+          {{- if $.Values.upgradeCenter.enabled }}
+          {{- if not $.Values.subApplication.subPath }}
+          - path: /boldservices/upgrade-center/*
+          {{- else }}
+          - path: /{{ $.Values.subApplication.subPath }}/upgrade-center/*
+          {{- end }}
+            {{- if $ingressSupportsPathType }}
+            pathType: {{ $ingressPathType }}
+            {{- end }}
+            backend:
+              {{- if $ingressApiIsStable }}
+              service:
+                name: boldbi-upgrade-center
+                port:
+                  number: 80
+              {{- else }}
+              serviceName: boldbi-upgrade-center
+              servicePort: 80
+              {{- end }}
+          {{- end }}
       {{- end }}
 ---
 apiVersion: {{ template "ingress.apiVersion" . }}
@@ -395,7 +435,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-    {{- if .Values.loadBalancer.affinityCookie.enable }}
+    {{- if $.Values.loadBalancer.affinityCookie.enable }}
     nginx.ingress.kubernetes.io/affinity: cookie
     nginx.ingress.kubernetes.io/session-cookie-hash: sha1
     nginx.ingress.kubernetes.io/session-cookie-name: "bold.k8s.pod.id"
@@ -411,7 +451,7 @@ spec:
   {{- end }} 
   {{- if and (eq (split ":" .Values.appBaseUrl)._0 "https") (not $isIP) }}
   tls:   
-    {{- if .Values.loadBalancer.multipleHost }}
+    {{- if $.Values.loadBalancer.multipleHost }}
     {{- range $host := .Values.loadBalancer.multipleHost.hostArray }}
     - hosts:
       {{- range $dns := $host.hosts }}
@@ -426,7 +466,7 @@ spec:
     {{- end }}
   {{- end }}
   rules:
-  {{- if .Values.loadBalancer.multipleHost }}
+  {{- if $.Values.loadBalancer.multipleHost }}
   {{- range $host := .Values.loadBalancer.multipleHost.hostArray }}
   {{- range $dns := $host.hosts }}
   - {{- if not $isIP }}
@@ -434,7 +474,7 @@ spec:
     {{- end }}
       http:
         paths:
-          {{- if not .Values.subApplication.subPath }}
+          {{- if not $.Values.subApplication.subPath }}
           - path: /boldservices/etlservice(/|$)(.*)
             {{- if $ingressSupportsPathType }}
           {{- else }}        
@@ -460,7 +500,7 @@ spec:
     {{- end }}
       http:
         paths:
-          {{- if not .Values.subApplication.subPath }}
+          {{- if not $.Values.subApplication.subPath }}
           - path: /boldservices/etlservice(/|$)(.*)
           {{- else }}
           - path: /{{ $.Values.subApplication.subPath }}/etlservice(/|$)(.*)
@@ -503,7 +543,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-    {{- if .Values.loadBalancer.affinityCookie.enable }}
+    {{- if $.Values.loadBalancer.affinityCookie.enable }}
     nginx.ingress.kubernetes.io/affinity: cookie
     nginx.ingress.kubernetes.io/session-cookie-hash: sha1
     nginx.ingress.kubernetes.io/session-cookie-name: "bold.k8s.pod.id"
@@ -519,7 +559,7 @@ spec:
   {{- end }}
   {{- if eq (split ":" .Values.appBaseUrl)._0 "https" }}
   tls:   
-    {{- if .Values.loadBalancer.multipleHost }}
+    {{- if $.Values.loadBalancer.multipleHost }}
     {{- range $host := .Values.loadBalancer.multipleHost.hostArray }}
     - hosts:
       {{- range $dns := $host.hosts }}
@@ -534,7 +574,7 @@ spec:
     {{- end }}
   {{- end }}
   rules:
-  {{- if .Values.loadBalancer.multipleHost }}
+  {{- if $.Values.loadBalancer.multipleHost }}
   {{- range $host := .Values.loadBalancer.multipleHost.hostArray }}
   {{- range $dns := $host.hosts }}
   - {{- if not $isIP }}
@@ -661,6 +701,22 @@ spec:
               serviceName: bold-ai-service
               servicePort: 6010
               {{- end }}
+          {{- if $.Values.upgradeCenter.enabled }}
+          - path: {{ $.Values.upgradeCenter.ingressPath }}/*
+            {{- if $ingressSupportsPathType }}
+            pathType: {{ $ingressPathType }}
+            {{- end }}
+            backend:
+              {{- if $ingressApiIsStable }}
+              service:
+                name: boldbi-upgrade-center
+                port:
+                  number: 80
+              {{- else }}
+              serviceName: boldbi-upgrade-center
+              servicePort: 80
+              {{- end }}
+          {{- end }}
   {{- end }}
   {{- end }}
   {{- else }}
@@ -788,6 +844,22 @@ spec:
               serviceName: bold-ai-service
               servicePort: 6010
               {{- end }}
+          {{- if $.Values.upgradeCenter.enabled }}
+          - path: /upgrade-center/*
+            {{- if $ingressSupportsPathType }}
+            pathType: {{ $ingressPathType }}
+            {{- end }}
+            backend:
+              {{- if $ingressApiIsStable }}
+              service:
+                name: boldbi-upgrade-center
+                port:
+                  number: 80
+              {{- else }}
+              serviceName: boldbi-upgrade-center
+              servicePort: 80
+              {{- end }}
+          {{- end }}
       {{- end }}
 ---
 apiVersion: {{ template "ingress.apiVersion" . }}
@@ -810,7 +882,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-    {{- if .Values.loadBalancer.affinityCookie.enable }}
+    {{- if $.Values.loadBalancer.affinityCookie.enable }}
     nginx.ingress.kubernetes.io/affinity: cookie
     nginx.ingress.kubernetes.io/session-cookie-hash: sha1
     nginx.ingress.kubernetes.io/session-cookie-name: "bold.k8s.pod.id"
@@ -826,7 +898,7 @@ spec:
   {{- end }}  
   {{- if eq (split ":" .Values.appBaseUrl)._0 "https" }}
   tls:   
-    {{- if .Values.loadBalancer.multipleHost }}
+    {{- if $.Values.loadBalancer.multipleHost }}
     {{- range $host := .Values.loadBalancer.multipleHost.hostArray }}
     - hosts:
       {{- range $dns := $host.hosts }}
@@ -841,7 +913,7 @@ spec:
     {{- end }}
   {{- end }}
   rules:
-  {{- if .Values.loadBalancer.multipleHost }}
+  {{- if $.Values.loadBalancer.multipleHost }}
   {{- range $host := .Values.loadBalancer.multipleHost.hostArray }}
   {{- range $dns := $host.hosts }}
   - {{- if not $isIP }}

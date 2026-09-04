@@ -5,6 +5,8 @@
 * [Create and connect a cluster](pre-requisites.md#create-a-cluster)
 * [Load Balancing](pre-requisites.md#load-balancing)
 
+  
+
 # Deploy Bold BI using kubectl
 
 [Bold BI](https://www.boldbi.com/) can be deployed manually on Kubernetes cluster. You can create Kubernetes cluster on cloud cluster providers(GKE,AKS and EKS). After completing cluster creation, connect to it and you can download the configuration files [here](../deploy/). This directory includes configuration YAML files, which contains all the configuration settings needed to deploy Bold BI on Kubernetes cluster. The following links explain Bold BI Kubernetes deployment in a specific cloud environments.
@@ -13,7 +15,6 @@
 * [Amazon Elastic Kubernetes Service (EKS)](amazon-eks.md)
 * [Azure Kubernetes Service (AKS)](microsoft-aks.md)
 * [Oracle Kubernetes Engine (OKE)](oracle-oke.md)
-
 
 # Upgrade Bold BI
 

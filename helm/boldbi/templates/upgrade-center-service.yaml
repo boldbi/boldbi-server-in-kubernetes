@@ -1,0 +1,25 @@
+{{- if .Values.upgradeCenter.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: boldbi-upgrade-center
+  {{- include "boldbi.namespace" . | nindent 2 }}
+  labels:
+    helm.sh/chart: {{ .Chart.Name }}_{{ .Chart.Version }}
+    app.kubernetes.io/name: boldbi-upgrade-center
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- if .Chart.AppVersion }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    {{- end }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: boldbi-upgrade-center
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+{{- end }}

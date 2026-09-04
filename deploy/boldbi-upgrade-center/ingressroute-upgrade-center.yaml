@@ -1,0 +1,38 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: boldbi-upgrade-center-trailing-slash
+  namespace: bold-services
+spec:
+  redirectRegex:
+    regex: ^(https?://[^/]+/upgrade-center)$
+    replacement: ${1}/
+    permanent: true
+---
+# Add this route to the existing Bold BI IngressRoute before the catch-all PathPrefix(`/`) route.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: boldbi-upgrade-center-route-template
+  namespace: bold-services
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+    # Update the host value with the actual domain name used for the Bold BI deployment
+      match: Host(`example.com`) && PathPrefix(`/upgrade-center`)
+      middlewares:
+        - name: body-limit-200m
+        - name: boldbi-upgrade-center-trailing-slash
+      priority: 1000
+      services:
+        - name: boldbi-upgrade-center
+          port: 80
+          serversTransport: long-timeouts-transport
+          sticky:
+            cookie:
+              maxAge: 600
+              name: bold.k8s.pod.id
+  tls:
+    secretName: bold-tls

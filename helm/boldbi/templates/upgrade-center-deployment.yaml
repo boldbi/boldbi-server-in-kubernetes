@@ -1,0 +1,498 @@
+{{- if .Values.upgradeCenter.enabled }}
+{{- $hasRealPV := or
+    .Values.persistentVolume.useExistingClaim
+    (and (eq .Values.clusterProvider "onpremise")
+      (ne (default "" .Values.persistentVolume.onpremise.hostPath) ""))
+    (and (eq .Values.clusterProvider "aks")
+      (or (ne (default "" .Values.persistentVolume.aks.nfs.fileShareName) "")
+       (ne (default "" .Values.persistentVolume.aks.fileShareName) "")))
+    (and (eq .Values.clusterProvider "eks")
+      (ne (default "" .Values.persistentVolume.eks.efsFileSystemId) ""))
+    (and (eq .Values.clusterProvider "gke")
+      (and (ne (default "" .Values.persistentVolume.gke.fileShareIp) "")
+        (ne (default "" .Values.persistentVolume.gke.fileShareName) "")))
+    (and (eq .Values.clusterProvider "ack")
+      (ne (default "" .Values.persistentVolume.ack.serverName) ""))
+    (and (eq .Values.clusterProvider "oke")
+      (or (ne (default "" .Values.persistentVolume.oke.volumeHandle) "")
+       (and .Values.persistentVolume.oke.blockVolume.blockVolumeEnable
+         (ne (default "" .Values.persistentVolume.oke.blockVolume.blockVolumeCapacity) ""))))
+}}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: boldbi-upgrade-center
+{{ include "boldbi.namespace" . | indent 2 }}
+  labels:
+    helm.sh/chart: {{ .Chart.Name }}_{{ .Chart.Version }}
+    app.kubernetes.io/name: boldbi-upgrade-center
+    app.kubernetes.io/instance: {{ .Release.Name }}
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: boldbi-upgrade-center
+{{ include "boldbi.namespace" . | indent 2 }}
+  labels:
+    helm.sh/chart: {{ .Chart.Name }}_{{ .Chart.Version }}
+    app.kubernetes.io/name: boldbi-upgrade-center
+    app.kubernetes.io/instance: {{ .Release.Name }}
+rules:
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - pods/log
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - create
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumeclaims
+    verbs:
+      - get
+      - create
+      - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: boldbi-upgrade-center
+{{ include "boldbi.namespace" . | indent 2 }}
+  labels:
+    helm.sh/chart: {{ .Chart.Name }}_{{ .Chart.Version }}
+    app.kubernetes.io/name: boldbi-upgrade-center
+    app.kubernetes.io/instance: {{ .Release.Name }}
+subjects:
+  - kind: ServiceAccount
+    name: boldbi-upgrade-center
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: boldbi-upgrade-center
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: boldbi-upgrade-center-config
+{{ include "boldbi.namespace" . | indent 2 }}
+  labels:
+    helm.sh/chart: {{ .Chart.Name }}_{{ .Chart.Version }}
+    app.kubernetes.io/name: boldbi-upgrade-center
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- if .Chart.AppVersion }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    {{- end }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+  releaseVersionsApiUrl: "https://boldbi-release-api.boldbidemo.com/version/json"
+  idpApi: "http://id-api-service:6001/api"
+  ums: "http://id-ums-service:6002/ums"
+  allowedForwardedPrefix0: "/upgrade-center"
+  playwrightJobTimeoutSeconds: "9000"
+  playwrightCleanupJobTimeoutSeconds: "900"
+  playwrightCompletedJobTtlSeconds: "3600"
+  playwrightWorkers: "1"
+  playwrightJobCpuRequest: "1"
+  playwrightJobCpuLimit: "2"
+  playwrightJobMemoryRequest: "2Gi"
+  playwrightJobMemoryLimit: "4Gi"
+  playwrightSharedStateVolumeEnabled: "true"
+  playwrightSharedStateStorageClassName: ""
+  playwrightSharedStateStorageSize: "1Gi"
+  playwrightSharedStateAccessMode: "ReadWriteOnce"
+  playwrightSharedStateMountPath: "/app/playwright-shared-state"
+  playwrightSharedStateFsGroup: "1001"
+  playwrightPodHoldSeconds: "10"
+  playwrightPassRateThreshold: "100"
+  playwrightReportUploadBaseUrl: "http://boldbi-upgrade-center/upgrade-center/api/playwright-reports"
+  playwrightResultUploadBaseUrl: "http://boldbi-upgrade-center/upgrade-center/api/playwright-results"
+  productHealthCheckEnabled: "true"
+  productHealthCheckTimeoutSeconds: "300"
+  productHealthCheckPollSeconds: "10"
+  productHealthCheckRequestTimeoutSeconds: "10"
+  kubernetesSkipTlsVerify: "false"
+  kubernetesAllowSkipTlsVerifyForLocalDevelopment: "false"
+  kubernetesCertificateAuthorityPath: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+  allowedImageRepository0: "us-docker.pkg.dev/boldbi-294612/boldbi"
+  allowedImageRegistryHost0: "us-docker.pkg.dev"
+  allowedImageRepository1: "syncfusion"
+  allowedImageRegistryHost1: "docker.io"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: boldbi-upgrade-center
+{{ include "boldbi.namespace" . | indent 2 }}
+  labels:
+    helm.sh/chart: {{ .Chart.Name }}_{{ .Chart.Version }}
+    app.kubernetes.io/name: boldbi-upgrade-center
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- if .Chart.AppVersion }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+    {{- end }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.upgradeCenter.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: boldbi-upgrade-center
+      # app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: boldbi-upgrade-center
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      serviceAccountName: boldbi-upgrade-center
+      automountServiceAccountToken: true
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+      - name: {{ .Values.imagePullSecrets }}
+      {{- end }}
+      initContainers:
+        - name: wait-for-idp-configuration
+          image: docker.io/curlimages/curl
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: IDP_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: idpApi
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              set -eu
+
+              configuration_url="${IDP_API_URL%/}/configuration"
+              timeout_seconds=300
+              poll_interval_seconds=30
+              start_time="$(date +%s)"
+
+              while true; do
+                elapsed_seconds=$(($(date +%s) - start_time))
+                echo "Checking IDP configuration endpoint. Elapsed ${elapsed_seconds}/${timeout_seconds} seconds."
+                response_file="$(mktemp)"
+                status_code="$(curl -sS -o "$response_file" -w "%{http_code}" --connect-timeout 5 --max-time 10 "$configuration_url" || true)"
+                response_bytes="$(wc -c < "$response_file" | tr -d ' ')"
+
+                if [ "$status_code" = "200" ] && [ "$response_bytes" -gt 0 ]; then
+                  echo "IDP configuration endpoint returned a response. Status: ${status_code}. ResponseBytes: ${response_bytes}."
+                  rm -f "$response_file"
+                  exit 0
+                fi
+
+                echo "IDP configuration endpoint is not ready. Status: ${status_code:-request_failed}. ResponseBytes: ${response_bytes}."
+                rm -f "$response_file"
+
+                elapsed_seconds=$(($(date +%s) - start_time))
+                if [ "$elapsed_seconds" -ge "$timeout_seconds" ]; then
+                  break
+                fi
+
+                remaining_seconds=$((timeout_seconds - elapsed_seconds))
+                sleep_seconds="$poll_interval_seconds"
+                if [ "$remaining_seconds" -lt "$poll_interval_seconds" ]; then
+                  sleep_seconds="$remaining_seconds"
+                fi
+
+                echo "Waiting ${sleep_seconds} seconds before retry."
+                sleep "$sleep_seconds"
+              done
+
+              echo "IDP configuration endpoint did not return a usable response within ${timeout_seconds} seconds."
+              exit 1
+      containers:
+        - name: boldbi-upgrade-center
+          image: "{{ .Values.upgradeCenter.image.repo }}:{{ .Values.upgradeCenter.image.tag }}"
+          imagePullPolicy: {{ .Values.upgradeCenter.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - secretRef:
+                name: boldbi-upgrade-center-playwright
+                optional: true
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:8080"
+            - name: ASPNETCORE_FORWARDEDHEADERS_ENABLED
+              value: "true"
+            - name: UpgradeCenter__ReleaseVersionsApiUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: releaseVersionsApiUrl
+            - name: UpgradeCenter__Services__IdpApi
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: idpApi
+            - name: UpgradeCenter__Services__Ums
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: ums
+            - name: UpgradeCenter__Authentication__AllowedForwardedPrefixes__0
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: allowedForwardedPrefix0
+            - name: UpgradeCenter__Playwright__UseKubernetesJob
+              value: "true"
+            - name: UpgradeCenter__Playwright__JobTimeoutSeconds
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightJobTimeoutSeconds
+            - name: UpgradeCenter__Playwright__CleanupJobTimeoutSeconds
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightCleanupJobTimeoutSeconds
+            - name: UpgradeCenter__Playwright__CompletedJobTtlSeconds
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightCompletedJobTtlSeconds
+            - name: UpgradeCenter__Playwright__WorkerCount
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightWorkers
+            - name: UpgradeCenter__Playwright__JobCpuRequest
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightJobCpuRequest
+            - name: UpgradeCenter__Playwright__JobCpuLimit
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightJobCpuLimit
+            - name: UpgradeCenter__Playwright__JobMemoryRequest
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightJobMemoryRequest
+            - name: UpgradeCenter__Playwright__JobMemoryLimit
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightJobMemoryLimit
+            - name: UpgradeCenter__Playwright__SharedStateVolumeEnabled
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightSharedStateVolumeEnabled
+            - name: UpgradeCenter__Playwright__SharedStateStorageClassName
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightSharedStateStorageClassName
+            - name: UpgradeCenter__Playwright__SharedStateStorageSize
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightSharedStateStorageSize
+            - name: UpgradeCenter__Playwright__SharedStateAccessMode
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightSharedStateAccessMode
+            - name: UpgradeCenter__Playwright__SharedStateMountPath
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightSharedStateMountPath
+            - name: UpgradeCenter__Playwright__SharedStateFsGroup
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightSharedStateFsGroup
+            - name: PLAYWRIGHT_POD_HOLD_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightPodHoldSeconds
+            - name: UpgradeCenter__Playwright__PassRateThreshold
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightPassRateThreshold
+            - name: UpgradeCenter__Playwright__ReportUploadBaseUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightReportUploadBaseUrl
+            - name: UpgradeCenter__Playwright__ResultUploadBaseUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: playwrightResultUploadBaseUrl
+            - name: UpgradeCenter__ProductHealthCheck__Enabled
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: productHealthCheckEnabled
+            - name: UpgradeCenter__ProductHealthCheck__TimeoutSeconds
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: productHealthCheckTimeoutSeconds
+            - name: UpgradeCenter__ProductHealthCheck__PollSeconds
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: productHealthCheckPollSeconds
+            - name: UpgradeCenter__ProductHealthCheck__RequestTimeoutSeconds
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: productHealthCheckRequestTimeoutSeconds
+            - name: UpgradeCenter__Kubernetes__SkipTlsVerify
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: kubernetesSkipTlsVerify
+            - name: UpgradeCenter__Kubernetes__AllowSkipTlsVerifyForLocalDevelopment
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: kubernetesAllowSkipTlsVerifyForLocalDevelopment
+            - name: UpgradeCenter__Kubernetes__CertificateAuthorityPath
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: kubernetesCertificateAuthorityPath
+            - name: UpgradeCenter__Kubernetes__AllowedImageRepositories__0
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: allowedImageRepository0
+            - name: UpgradeCenter__Kubernetes__AllowedImageRegistryHosts__0
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: allowedImageRegistryHost0
+            - name: UpgradeCenter__Kubernetes__AllowedImageRepositories__1
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: allowedImageRepository1
+            - name: UpgradeCenter__Kubernetes__AllowedImageRegistryHosts__1
+              valueFrom:
+                configMapKeyRef:
+                  name: boldbi-upgrade-center-config
+                  key: allowedImageRegistryHost1
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+            runAsGroup: 0
+          readinessProbe:
+            httpGet:
+              path: /upgrade-center/health-check
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /upgrade-center/health-check
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: {{ .Values.upgradeCenter.resources.requests.cpu }}
+              memory: {{ .Values.upgradeCenter.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.upgradeCenter.resources.limits.cpu }}
+              memory: {{ .Values.upgradeCenter.resources.limits.memory }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- if $hasRealPV }}
+            - mountPath: /app/App_Data
+              name: upgrade-center-volume
+            {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        {{- if $hasRealPV }}
+        - name: upgrade-center-volume
+          persistentVolumeClaim:
+            {{- if $.Values.persistentVolume.useExistingClaim }}
+            claimName: {{ $.Values.persistentVolume.claimName }}
+            {{- else }}
+            claimName: {{ printf "%s-claim" $.Values.persistentVolume.name }}
+            {{- end }}
+            readOnly: false
+        {{- end }}
+      {{- if .Values.tolerationEnable }}
+      tolerations:
+      {{- range .Values.tolerations }}
+        - key: {{ .key }}
+          operator: {{ .operator }}
+          value: {{ .value }}
+          effect: {{ .effect }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.nodeAffinityEnable }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: {{ .Values.nodeAffinity.key }}
+                    operator: {{ .Values.nodeAffinity.operator }}
+                    values:
+                      - {{ .Values.nodeAffinity.value }}
+      {{- end }}
+{{- end }}

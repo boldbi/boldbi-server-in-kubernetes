@@ -161,6 +161,17 @@ spec:
     retries:
       attempts: 3
       retryOn: gateway-error,connect-failure,refused-stream
+  {{- if .Values.upgradeCenter.enabled }}
+  # Upgrade Center
+  - match:
+    - uri:
+        prefix: /upgrade-center
+    route:
+    - destination:
+        port:
+          number: 80
+        host: boldbi-upgrade-center
+  {{- end }}
   - match:
     - uri:
         prefix: /

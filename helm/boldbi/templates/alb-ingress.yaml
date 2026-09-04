@@ -55,6 +55,22 @@ spec:
             name: bold-etl-service
             port:
               number: 6009
+      {{- if .Values.upgradeCenter.enabled }}
+      - path: "/upgrade-center"
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: boldbi-upgrade-center
+            port:
+              number: 80
+      - path: "/upgrade-center/*"
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: boldbi-upgrade-center
+            port:
+              number: 80
+      {{- end }}
       - path: "/bi/api/*"
         pathType: ImplementationSpecific
         backend:
@@ -112,3 +128,4 @@ spec:
             port:
               number: 6010
 {{- end }}
+ 

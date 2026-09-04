@@ -5,6 +5,12 @@
 {{- if .Values.subApplication.enabled }}
   {{- $subPath = printf "/%s" (.Values.subApplication.subPath | default "boldservices") }}
 {{- end }}
+
+{{- $upgradeCenterPath := "/upgrade-center" }}
+{{- if .Values.subApplication.enabled }}
+  {{- $upgradeCenterPath = printf "%s%s" $subPath "/upgrade-center" }}
+{{- end }}
+
 apiVersion: traefik.io/v1alpha1
 kind: ServersTransport
 metadata:
@@ -16,6 +22,7 @@ spec:
     responseHeaderTimeout: 300s
     idleConnTimeout: 300s
     readIdleTimeout: 300s
+
 ---
 {{- if .Values.loadBalancer.enableGzip }}
 apiVersion: traefik.io/v1alpha1
@@ -27,6 +34,7 @@ spec:
   compress:
     minResponseBodyBytes: 1024
 {{- end }}
+
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -36,6 +44,7 @@ metadata:
 spec:
   buffering:
     maxRequestBodyBytes: 209715200
+
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -46,10 +55,27 @@ spec:
   replacePathRegex:
     regex: ^/etlservice(/|$)(.*)
     replacement: /$2
+
+{{- if .Values.upgradeCenter.enabled }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: boldbi-upgrade-center-trailing-slash
+  {{- include "boldbi.namespace" . | nindent 2 }}
+spec:
+  redirectRegex:
+    regex: ^(https?://[^/]+{{ $upgradeCenterPath }})$
+    replacement: ${1}/
+    permanent: true
+{{- end }}
+
 ---
 {{- if (and (hasKey .Values.loadBalancer "multipleHost") (hasKey .Values.loadBalancer.multipleHost "hostArray") (gt (len .Values.loadBalancer.multipleHost.hostArray) 0)) }}
+
   {{- range $groupIdx, $group := .Values.loadBalancer.multipleHost.hostArray }}
     {{- range $hostIdx, $host := $group.hosts }}
+
       {{- $ingressName := printf "bold-ingressroute-group%d-host%d" $groupIdx $hostIdx }}
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
@@ -69,13 +95,14 @@ spec:
     - web
   {{- end }}
   routes:
+
     - match: |
         {{- if and $isIP $.Values.subApplication.enabled }}
         PathPrefix(`{{ $subPath }}`)
         {{- else if $isIP }}
         PathPrefix(`/`)
         {{- else }}
-          {{- if $.Values.subApplication.enabled }}  
+          {{- if $.Values.subApplication.enabled }}
         Host(`{{ $host }}`) && PathPrefix(`{{ $subPath }}`)
           {{- else }}
         Host(`{{ $host }}`) && PathPrefix(`/`)
@@ -97,6 +124,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" $.Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathPrefix(`{{ printf "%s/api" $subPath }}`)
@@ -119,6 +147,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" $.Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathPrefix(`{{ printf "%s/ums" $subPath }}`)
@@ -141,6 +170,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" $.Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathPrefix(`{{ printf "%s/bi/api" $subPath }}`)
@@ -163,6 +193,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" $.Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathPrefix(`{{ printf "%s/bi/jobs" $subPath }}`)
@@ -185,6 +216,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" $.Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathPrefix(`{{ printf "%s/bi/designer" $subPath }}`)
@@ -207,6 +239,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" $.Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathPrefix(`{{ printf "%s/bi" $subPath }}`)
@@ -229,6 +262,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" $.Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathPrefix(`{{ printf "%s/aiservice" $subPath }}`)
@@ -251,6 +285,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" $.Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathRegexp(`^{{ $subPath }}/etlservice(/|$)(.*)`)
@@ -274,10 +309,35 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" $.Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
+    {{- if $.Values.upgradeCenter.enabled }}
+    - match: |
+        {{- if $isIP }}
+        PathPrefix(`{{ $upgradeCenterPath }}`)
+        {{- else }}
+        Host(`{{ $host }}`) && PathPrefix(`{{ $upgradeCenterPath }}`)
+        {{- end }}
+      kind: Rule
+      middlewares:
+        - name: body-limit-200m
+        - name: boldbi-upgrade-center-trailing-slash
+      priority: 1000
+      services:
+        - name: boldbi-upgrade-center
+          port: 80
+          serversTransport: long-timeouts-transport
+          sticky:
+            cookie:
+              maxAge: {{ default "600" $.Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
+              name: bold.k8s.pod.id
+    {{- end }}
+
 ---
-    {{- end }}  {{- /* end per-host */ -}}
-  {{- end }}  {{- /* end per-group */ -}}
+    {{- end }}
+  {{- end }}
+
 {{- else }}
+
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
@@ -290,19 +350,20 @@ spec:
   entryPoints:
     - websecure
   tls:
-    secretName: {{ .Values.loadBalancer.singleHost.secretName | default "bold-tls" }}
+    secretName: {{ .Values.loadBalancer.singleHost.secretName }}
   {{- else }}
   entryPoints:
     - web
   {{- end }}
   routes:
+
     - match: |
         {{- if and $isIP $.Values.subApplication.enabled }}
         PathPrefix(`{{ $subPath }}`)
         {{- else if $isIP }}
         PathPrefix(`/`)
         {{- else }}
-          {{- if $.Values.subApplication.enabled }}  
+          {{- if $.Values.subApplication.enabled }}
         Host(`{{ $baseHost }}`) && PathPrefix(`{{ $subPath }}`)
           {{- else }}
         Host(`{{ $baseHost }}`) && PathPrefix(`/`)
@@ -324,6 +385,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" .Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathPrefix(`{{ printf "%s/api" $subPath }}`)
@@ -346,6 +408,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" .Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathPrefix(`{{ printf "%s/ums" $subPath }}`)
@@ -368,6 +431,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" .Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathPrefix(`{{ printf "%s/bi/api" $subPath }}`)
@@ -390,6 +454,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" .Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathPrefix(`{{ printf "%s/bi/jobs" $subPath }}`)
@@ -412,6 +477,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" .Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathPrefix(`{{ printf "%s/bi/designer" $subPath }}`)
@@ -434,6 +500,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" .Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathPrefix(`{{ printf "%s/bi" $subPath }}`)
@@ -456,6 +523,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" .Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathPrefix(`{{ printf "%s/aiservice" $subPath }}`)
@@ -478,6 +546,7 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" .Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
     - match: |
         {{- if $isIP }}
         PathRegexp(`^{{ $subPath }}/etlservice(/|$)(.*)`)
@@ -501,5 +570,28 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" .Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+
+    {{- if .Values.upgradeCenter.enabled }}
+    - match: |
+        {{- if $isIP }}
+        PathPrefix(`{{ $upgradeCenterPath }}`)
+        {{- else }}
+        Host(`{{ $baseHost }}`) && PathPrefix(`{{ $upgradeCenterPath }}`)
+        {{- end }}
+      kind: Rule
+      middlewares:
+        - name: body-limit-200m
+        - name: boldbi-upgrade-center-trailing-slash
+      priority: 1000
+      services:
+        - name: boldbi-upgrade-center
+          port: 80
+          serversTransport: long-timeouts-transport
+          sticky:
+            cookie:
+              maxAge: {{ default "600" .Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
+              name: bold.k8s.pod.id
+    {{- end }}
+
 {{- end }}
 {{- end }}

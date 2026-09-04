@@ -343,6 +343,34 @@ queryMetricsWithQueryInDebugFiles:
 querymetricswithqueryinHAR:
   enable: false
 
+## Bold BI Upgrade Center Configuration
+upgradeCenter:
+  # Set this to true to deploy the Bold BI Upgrade Center service. Set it to false to skip Upgrade Center resources.
+  enabled: true
+  # Root User administrator credentials used by Upgrade Center validation jobs.
+  # 
+  # Credentials provided under rootUserDetails take priority. These values are used only when rootUserDetails is empty.
+  secret:
+    adminUsername: ""
+    adminPassword: ""
+
+  # Upgrade Center web application image.
+  image:
+    repo: docker.io/syncfusion/boldbi-upgrade-center
+    tag: v1.0
+    pullPolicy: Always
+
+  # CPU and memory requests/limits for the Upgrade Center web application pod.
+  # Increase these values if large history, log, report, or Kubernetes monitoring workloads are expected.
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1536Mi
+
+
 # Tolerations allow the pods to be scheduled into nodes with matching taints.
 # Set this to true if you use tolerations in your cluster.
 # If you need more than one toleration, you can add tolerations below.
