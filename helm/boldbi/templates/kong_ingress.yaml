@@ -103,6 +103,15 @@ spec:
                 name: bold-ai-service
                 port:
                   number: 6010
+          {{- if .Values.upgradeCenter.enabled }}
+          - path: {{ $subPath }}/upgrade-center
+            pathType: Prefix
+            backend:
+              service:
+                name: boldbi-upgrade-center
+                port:
+                  number: 80
+          {{- end }}               
     {{- if .Values.loadBalancer.multipleHost }}
       {{- range .Values.loadBalancer.multipleHost.hostArray }}
         {{- range .hosts }}
@@ -169,6 +178,15 @@ spec:
                 name: bold-ai-service
                 port:
                   number: 6010
+          {{- if $.Values.upgradeCenter.enabled }}
+          - path: {{ $subPath }}/upgrade-center
+            pathType: Prefix
+            backend:
+              service:
+                name: boldbi-upgrade-center
+                port:
+                  number: 80
+          {{- end }}
         {{- end }}
       {{- end }}
     {{- end }}

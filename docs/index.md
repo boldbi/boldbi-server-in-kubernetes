@@ -14,7 +14,6 @@
 * [Azure Kubernetes Service (AKS)](microsoft-aks.md)
 * [Oracle Kubernetes Engine (OKE)](oracle-oke.md)
 
-
 # Upgrade Bold BI
 
 If you are upgrading Bold BI to latest version, please follow the steps in this [link](upgrade.md).

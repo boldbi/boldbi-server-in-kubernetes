@@ -1,4 +1,4 @@
-﻿# Deploy Bold BI using Helm
+# Deploy Bold BI using Helm
 
 This chart installs [Bold BI](https://www.boldbi.com/) on Kubernetes. You can create Kubernetes cluster in cloud cluster providers(GKE, AKS, EKS and OKE). Please follow the below documentation for Bold BI deployment in a specific cloud environments.
 
@@ -96,7 +96,7 @@ For Helm chart, you'll need to craft a `values.yaml`.
        persistentVolume *
       </td>
       <td>
-       Please refer to <a href='docs/configuration.md#persistent-volume'>this</a> section to know more on how to set Persistant Volumes for Bold BI.
+       Please refer to <a href='docs/configuration.md#persistent-volume'>this</a> section to know more on how to set Persistent Volumes for Bold BI.
       </td>
     </tr>
     <tr>
@@ -259,6 +259,15 @@ For Helm chart, you'll need to craft a `values.yaml`.
         Reference: <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity" target="_blank">Kubernetes Pod Anti-Affinity</a>.
       </td>
     </tr>
+    <tr>
+      <td>
+        upgradeCenter.enabled
+      </td>
+      <td>
+        Set to <code>true</code> to deploy and enable the Bold BI Upgrade Center service. Default is <code>false</code>.<br /><br />
+        For full configuration options (credentials, resources, Playwright runner), refer to the <a href="../docs/upgrade-center-deployment.md#deploy-upgrade-center-using-helm">Upgrade Center configuration guide</a>.
+      </td>
+    </tr>
     </table>
 <br/>
 
@@ -320,7 +329,7 @@ The following environment variables are optional. If not provided, a manual Appl
        dbPort
       </td>
       <td>
-       The system will use the following default port numbers based on the database server type.<br />PostgrSQL – 5432<br />MySQL -3306<br />Oracle - 1521<br />Please specify the port number for your database server if it is configured on a different port.<br /><br />For MS SQL Server, this parameter is not necessary.
+       The system will use the following default port numbers based on the database server type.<br />PostgreSQL – 5432<br />MySQL -3306<br />Oracle - 1521<br />Please specify the port number for your database server if it is configured on a different port.<br /><br />For MS SQL Server, this parameter is not necessary.
       </td>
     </tr>
     <tr>
@@ -374,6 +383,82 @@ The following environment variables are optional. If not provided, a manual Appl
       </td>
     </tr>
 </table>
+<br/>
+
+## Environment variables for configuring Upgrade Center
+
+The following environment variables are used to configure the Bold BI Upgrade Center. Set `upgradeCenter.enabled: true` to deploy the service. For full deployment steps and configuration details, refer to the [Upgrade Center configuration guide](../docs/upgrade-center-deployment.md#deploy-upgrade-center-using-helm).
+
+<table>
+    <tr>
+      <td>
+       <b>Name</b>
+      </td>
+      <td>
+       <b>Description</b>
+      </td>
+    </tr>
+    <tr>
+      <td>
+       upgradeCenter.enabled
+      </td>
+      <td>
+       Set to <code>true</code> to deploy and enable the Bold BI Upgrade Center service. Default is <code>false</code>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+       upgradeCenter.resources.requests.cpu
+      </td>
+      <td>
+       CPU request for Upgrade Center pods. Default is <code>250m</code>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+       upgradeCenter.resources.requests.memory
+      </td>
+      <td>
+       Memory request for Upgrade Center pods. Default is <code>512Mi</code>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+       upgradeCenter.resources.limits.cpu
+      </td>
+      <td>
+       CPU limit for Upgrade Center pods. Default is <code>1</code>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+       upgradeCenter.resources.limits.memory
+      </td>
+      <td>
+       Memory limit for Upgrade Center pods. Default is <code>1536Mi</code>.
+      </td>
+    </tr>
+    <tr>
+      <td>
+       upgradeCenter.secret.adminUsername
+      </td>
+      <td>
+       Root user administrator username for Upgrade Center authentication. If not provided, the username from <code>rootUserDetails.email</code> will be used. This field is optional if <code>rootUserDetails</code> is already configured.
+      </td>
+    </tr>
+    <tr>
+      <td>
+       upgradeCenter.secret.adminPassword
+      </td>
+      <td>
+       Root user administrator password for Upgrade Center authentication. If not provided, the password from <code>rootUserDetails.password</code> will be used. This field is optional if <code>rootUserDetails</code> is already configured.
+      </td>
+    </tr>
+</table>
+<br/>
+
+> **StorageClass requirement:** Upgrade Center creates a temporary shared volume for validation state. The Kubernetes cluster must have a working default StorageClass and the matching CSI driver installed. If the default StorageClass cannot provision a volume, the validation pod remains in `Pending` state.
+
 <br/>
 
 ## Environment variables for configuring Branding in backend
@@ -763,3 +848,27 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 Configure the Bold BI On-Premise application startup to use the application. Please refer the following link for more details on configuring the application startup.
     
 https://help.boldbi.com/embedded-bi/application-startup
+
+## Accessing Upgrade Center
+
+If you have enabled the Upgrade Center service (`upgradeCenter.enabled: true`), you can access it using the following URL:
+
+```
+https://<your-domain>/upgrade-center
+```
+
+**Requirements:**
+- The Upgrade Center must be enabled in your values.yaml configuration
+- You must be logged in with root administrator credentials
+- The Bold BI application must be running and accessible
+- Proper network connectivity to the Upgrade Center ingress path
+
+**Disable Upgrade Center:**
+
+To disable the Upgrade Center service, set `upgradeCenter.enabled: false` in your values.yaml and run:
+
+```console
+helm upgrade [RELEASE_NAME] boldbi/boldbi -f [Crafted values.yaml file] -n [namespace-name]
+```
+
+This will remove the Upgrade Center deployment, service, and ingress routes from your cluster.

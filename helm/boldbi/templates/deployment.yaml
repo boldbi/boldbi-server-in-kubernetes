@@ -107,6 +107,8 @@ spec:
           value: {{ $.Values.appBaseUrl }}
         - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
           value: k8s
+        - name: BOLD_SERVICES_UPGRADE_CENTER_ENABLE
+          value: "{{ $.Values.upgradeCenter.enabled | default "false" }}"
         {{- if eq $.Values.logging.output "console" }}
         - name: BOLD_SERVICES_CONSOLE_LOG_ENABLED
           value: "true"

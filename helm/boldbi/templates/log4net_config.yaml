@@ -42,8 +42,9 @@ data:
           <rollingStyle value="Size" />
           <staticLogFileName value="true" />
           <layout type="log4net.Layout.PatternLayout">
-            <header type="log4net.Util.PatternString" value="#Software: %property{LoggerName} %newline#Date: %date %newline#Fields: date thread namespace methodname message %newline" />
-            <conversionPattern value="%date    [%thread]    %message%newline" />
+            <header type="log4net.Util.PatternString"
+             value="#Software: %property{LoggerName} %newline#Date: %date %newline#Fields: date thread correlationId traceId spanId requestId namespace methodname message %newline" />
+            <conversionPattern value="%date [%thread] corr=%property{CorrelationId} traceId=%property{TraceId} spanId=%property{SpanId} requestId=%property{RequestId} %message%newline" />
           </layout>
         </appender>
         {{- end }}
@@ -62,8 +63,9 @@ data:
           <rollingStyle value="Size" />
           <staticLogFileName value="true" />
           <layout type="log4net.Layout.PatternLayout">
-            <header type="log4net.Util.PatternString" value="#Software: %property{LoggerName} %newline#Date: %date %newline#Fields: date thread namespace methodname message %newline" />
-            <conversionPattern value="%date    [%thread]    %-5level    %message%newline" />
+            <header type="log4net.Util.PatternString"
+            value="#Software: %property{LoggerName} %newline#Date: %date %newline#Fields: date thread correlationId traceId spanId requestId namespace methodname message %newline" />
+            <conversionPattern value="%date [%thread] %-5level corr=%property{CorrelationId} traceId=%property{TraceId} spanId=%property{SpanId} requestId=%property{RequestId} %message%newline" />
           </layout>
         </appender>
         {{- end }}
@@ -88,7 +90,7 @@ data:
           </filter>
           {{- end }}
           <layout type="log4net.Layout.PatternLayout">
-            <conversionPattern value="%-5level %message%newline" />
+            <conversionPattern value="%-5level corr=%property{CorrelationId} traceId=%property{TraceId} spanId=%property{SpanId} requestId=%property{RequestId} %message%newline" />
           </layout>
         </appender>
         {{- end }}

@@ -72,7 +72,7 @@ It is the image user's responsibility to ensure that any use of this image compl
 
 [How to auto deploy Bold BI in Kubernetes cluster?](https://github.com/boldbi/boldbi-server-in-kubernetes/blob/main/docs/bold-bi-auto-deployment.md)
 
-[How to manually configure SSL using cert manager in Bold BI Kubernetes deployment?](https://github.com/boldbi/boldbi-server-in-kubernetes/blob/main//docs/FAQ/how-to-manually-configure-ssl-using-cert-manger-in-bold-bi-kubernetes-deployment.md)
+[How to manually configure SSL using cert manager in Bold BI Kubernetes deployment?](https://github.com/boldbi/boldbi-server-in-kubernetes/blob/main//docs/FAQ/how-to-manually-configure-ssl-using-cert-manager-in-bold-bi-kubernetes-deployment.md)
 
 [How to deploy Bold BI in EKS using Network Load Balancer (NLB) with SSL certificate from AWS Certificate Manager (ACM)?](https://github.com/boldbi/boldbi-server-in-kubernetes/blob/main//docs/FAQ/how-deploy-bold-bi-in-eks-using-network-load-balancer-with-ssl-certificate-from-acm.md)
 

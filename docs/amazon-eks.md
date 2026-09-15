@@ -155,3 +155,5 @@ kubectl get pods -n bold-services
 29.	Configure the Bold BI On-Premise application startup to use the application. Please refer the following link for more details on configuring the application startup.
     
     https://help.boldbi.com/embedded-bi/application-startup
+
+30. You can enable the **Upgrade Center** feature to manage in-application upgrades directly from the Bold BI administration panel. Refer to the [Upgrade Center configuration guide](upgrade-center-deployment.md#deploy-upgrade-center-using-kubectl) for deployment steps using kubectl.
