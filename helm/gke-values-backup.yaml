@@ -1,0 +1,343 @@
+# Default values for boldbi.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+namespace: bi-services
+appBaseUrl: 'https://upgrade-center-bi.boldbidemo.com'
+optionalLibs: 'mongodb,mysql,influxdb,snowflake,oracle,google,clickhouse'
+clusterProvider: 'gke'
+
+persistentVolume:
+  # persistent volumes were global resources. 
+  # so if you already have Bold BI installed in your cluster, then the previous persistent volume name will conflict with current installation.
+  # Change this name to avoid conflicts with previous Bold BI persistent volumes.
+  name: bold-fileserver
+  capacity: 3Gi
+  gke:
+    fileShareName: '/filestorenew/upgrade-center-bi'
+    fileShareIp: '10.90.34.2'
+
+  #Set 'useExistingClaim' to true to use an existing PersistentVolumeClaim (PVC).
+  useExistingClaim: false
+  
+  #If 'useExistingClaim' is true, you must also provide the 'claimName' of the existing PVC.
+  claimName: ''
+
+# For OCI configuration, set enabled as true.
+ociStorage:
+  # Enable OCI storage backend (required: set to true to use OCI)
+  enabled: false
+  # OCI access key for authentication (e.g., your OCI user access key)
+  accessKey:
+  # Name of the OCI bucket to use for storage
+  bucketName:
+  # OCI namespace (tenant OCID or namespace name)
+  namespace:
+  # OCI region where the bucket is located (e.g., us-ashburn-1)
+  region:
+  # Root folder path within the bucket for storing data
+  rootFolderName:
+  # OCI secret key for authentication (e.g., your OCI user secret key)
+  secretKey: 
+  # Type of OCI storage
+  storageType: 4
+
+# For Amazon S3 Bucket configuration, set enabled as true.
+s3Storage:
+  # Enable S3 storage backend (required: set to true to use S3)
+  enabled: false
+  # AWS access key ID for authentication (e.g., your IAM user access key ID)
+  accessKey: 
+  # Name of the S3 bucket to use for storage
+  bucketName: 
+  # AWS region where the bucket is located (e.g., us-east-1)
+  region: 
+  # Root folder path within the bucket for storing data
+  rootFolderName:
+  # AWS secret access key for authentication (e.g., your IAM user secret access key)
+  secretKey: 
+  # Type of S3 storage
+  storageType: 3
+
+# For Azure Blob Storage configuration, set enabled as true.
+azureStorage:
+  # Enable Azure Blob storage backend (required: set to true to use Azure)
+  enabled: false
+  # Azure Blob access key for authentication
+  accessKey:
+  # Azure Blob account name
+  accountName:
+  # Name of the Azure Blob container to use for storage
+  containerName:
+  # Azure Blob connection type (e.g., default, managedidentity)
+  connectionType:
+  # Azure Blob storage URI (e.g., for managed identity authentication)
+  storageUri:
+  # Type of Azure storage (set to 1 for Azure Blob)
+  storageType: 1
+
+# image:
+#   repo: us-docker.pkg.dev/boldbi-294612/boldbi
+#   # Overrides the image tag whose default is the chart appVersion.
+#   tag: 16.3.5
+#   pullPolicy: IfNotPresent
+# imagePullSecrets: []
+
+loadBalancer:
+  type: traefik
+  affinityCookie:
+    enable: true
+    affinityCookieExpiration: 600
+  # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
+  # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
+  # If you want to use a custom ingressClassName, make sure that the corresponding IngressClass is already created in your ingress controller. Ex: ingressClassName: nginx-bi
+  # ingressClassName: nginx
+  
+  nginxIngressAnnotations:
+    # Enter annotations here for adding annotations in nginx ingress
+    # Example:
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+
+  kongIngressAnnotations:
+    # Enter annotations here for adding annotations in Kong ingress
+    # Example:
+    # konghq.com/preserve-host: "true"
+    # konghq.com/protocols: "http,https"
+
+  singleHost: 
+    secretName: bold-tls
+  # multipleHost:
+    # hostArray:
+      # - hosts: 
+          # - kubernetes.docker.internal
+          # - example.com
+        # secretName: bold-tls
+
+  # Enable Gzip in nginx-ingress to reduce the size of HTTP responses.
+  enableGzip: false 
+
+  # Enable ReverseProxy changes in nginx-ingress to forward client requests to backend web servers.
+  ReverseProxy: false
+
+subApplication:
+  enabled: false
+  # Specify the subpath. The default subpath value is 'boldservices'
+  subPath: 
+
+instanceConfig:
+  - app: id-web
+    replicaCount: 1
+    minReplicas: 1
+    maxReplicas: 1
+    cpuResourceRequests: 250m
+    memoryResourceRequests: 750Mi
+  - app: id-api
+    replicaCount: 1
+    minReplicas: 1
+    maxReplicas: 1
+    cpuResourceRequests: 250m
+    memoryResourceRequests: 750Mi
+  - app: id-ums
+    replicaCount: 1
+    minReplicas: 1
+    maxReplicas: 1
+    cpuResourceRequests: 250m
+    memoryResourceRequests: 750Mi
+  - app: bi-web
+    replicaCount: 1
+    minReplicas: 1
+    maxReplicas: 1
+    cpuResourceRequests: 250m
+    memoryResourceRequests: 750Mi
+  - app: bi-api
+    replicaCount: 1
+    minReplicas: 1
+    maxReplicas: 1
+    cpuResourceRequests: 250m
+    memoryResourceRequests: 750Mi
+  - app: bi-jobs
+    replicaCount: 1
+    minReplicas: 1
+    maxReplicas: 1
+    cpuResourceRequests: 250m
+    memoryResourceRequests: 750Mi
+  - app: bi-dataservice
+    replicaCount: 1
+    minReplicas: 1
+    maxReplicas: 1
+    cpuResourceRequests: 250m
+    memoryResourceRequests: 750Mi
+  - app: bold-etl
+    replicaCount: 1
+    minReplicas: 1
+    maxReplicas: 1
+    cpuResourceRequests: 250m
+    memoryResourceRequests: 750Mi
+  - app: bold-ai
+    replicaCount: 1
+    minReplicas: 1
+    maxReplicas: 1
+    cpuResourceRequests: 250m
+    memoryResourceRequests: 750Mi
+  
+autoscaling:
+  enabled: true
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    stabilizationWindowSeconds: 60
+    podsValue: 1
+    podsPeriodSeconds: 60
+    percentValue: 10
+    percentPeriodSeconds: 60
+    
+## Custom Localization
+localization:
+  customLocalePath: ''
+
+## Bold BI Secrets
+bingMapWidget:
+  enabled: false
+  apiKey: ''
+
+## Custom Size PDFExport
+customSizePdfExport:
+  enable: false
+  
+## BrowserTimezone
+browserTimeZone:
+  enable: false
+  
+## Site Identifier
+useSiteIdentifier:
+  enable: true
+
+##Integrating Azure Application Insights with Bold BI Enterprise Edition enables you to track and visualize your application’s performance, detect issues, and enhance your application’s overall reliability.
+azureApplicationInsights:
+  connectionString: ""
+  
+## If the query metrics need to be logged in HAR files, set this option to true. By default, this option is set to false.
+querymetricswithqueryinHAR:
+  enable: false
+  
+rootUserDetails:
+  # Set this to true if you have existing details in your cluster.
+  existingSecret: false
+  email: ""
+  password: ""
+
+databaseServerDetails:
+  # Set this to true if you have existing details in your cluster.
+  existingSecret: false
+
+  # Type of database server can be used for configuring the Bold BI. Eg: mssql, mysql and postgresql
+  dbType: ""
+
+  # Name of the Database Server
+  dbHost: ""
+
+  # The system will use the following default port numbers based on the database server type.
+  # PostgrSQL – 5432 and MySQL -3306
+  # Please specify the port number for your database server if it is configured on a different port.
+  # For MS SQL Server, this parameter is not necessary.
+  dbPort: ""
+
+  # Username for the database server
+  # Please refer to this documentation for information on the user's permissions.
+  # https://help.boldbi.com/embedded-bi/faq/what-are-the-database-permissions-required-to-set-up-bold-bi-embedded/
+  dbUser: ""
+
+  # The database user's password
+  dbPassword: ""
+
+  # If the database name is not specified, the system will create a new database called bold-services.
+  # If you specify a database name, it should already exist on the server.
+  dbName: ""
+
+  # For PostgreSQL DB Servers, this is an optional parameter.
+  # The system will use the database name postgresql by default.
+  # If your database server uses a different default database, please provide it here.
+  maintenanceDB: ""
+  
+  # If your database server requires additional connection string parameters, include them here
+  # Connection string parameters can be found in the official document.
+  # My SQL: https://dev.mysql.com/doc/connector-net/en/connector-net-8-0-connection-options.html
+  # PostgreSQL: https://www.npgsql.org/doc/connection-string-parameters.html
+  # MS SQL: https://docs.microsoft.com/en-us/dotnet/api/system.data.sqlclient.sqlconnection.connectionstring
+  # Note: A semicolon(;) should be used to separate multiple parameters.
+  dbAdditionalParameters: ""
+
+  #A database schema defines the structure, organization, and constraints of data within a database, including tables, fields, relationships, and indexes.
+  #In MSSQL, the default schema is dbo.
+  #In PostgreSQL, the default schema is public.
+  #Both schemas contain tables and other database objects by default.
+  dbSchema: ""
+  
+brandingDetails:
+  # This is the header logo for the application, and the preferred image size is 40 x 40 pixels.
+  mainLogo:  ""
+  
+  # This is the login logo for the application, and the preferred image size is 200 x 40 pixels.
+  loginLogo:  ""
+  
+  # This is an email logo, and the preferred image size is 200 x 40 pixels.
+  emailLogo:  ""
+  
+   # This is a favicon, and the preferred image size is 40 x 40 pixels.
+  favicon:  ""
+  
+  # This is powered by the logo, and the preferred size is 100 x 25 pixels.
+  footerLogo:  ""
+  
+  # This is organization name.
+  siteName: ""
+  
+  # This is site identifier, and it will be the part of the application URL.
+  siteIdentifier: ""
+
+  # To show or hide the copy right info. (true or false)
+  showCopyRightInfo: ""
+
+  # To show or hide the powered by logo information. (true or false)
+  showPoweredBySyncfusion: ""
+  
+licenseKeyDetails:
+  # Set this to true if you have existing details in your cluster.
+  existingSecret: false
+  
+  #  The Bold BI license key that you purchased.
+  licenseKey: ""
+
+## If the query metrics need to be logged in debug files, set this option to true. By default, this option is set to false.
+queryMetricsInDebugFiles:
+  enable: false
+
+## If the query and query metrics need to be logged in debug files, set this option to true. By default, this option is set to false.
+queryMetricsWithQueryInDebugFiles:
+  enable: false
+
+# Tolerations allow the pods to be scheduled into nodes with matching taints.
+# Set this to true if you use tolerations in your cluster.
+# If you need more than one toleration, you can add tolerations below.
+tolerationEnable: false 
+tolerations:
+  - key: ""
+    operator: ""
+    value: ""
+    effect: ""
+
+# Node affinity ensures that the pods are scheduled into nodes with matching labels.
+# Set this to true if you use Node affinity in your cluster.
+nodeAffinityEnable: false
+nodeAffinity:
+  key: ""
+  operator: ""
+  value: ""
+
+# Pod affinity ensures that the pods are scheduled into nodes with matching pods.
+# Set this to true if you use pod Affinity in your cluster.
+podAffinityEnable: false
+
+# Pod anti-affinity ensures that the pods are not scheduled into nodes with matching pods.
+# Set this to true if you use pod AntiAffinity in your cluster.
+podAntiAffinityEnable: false
