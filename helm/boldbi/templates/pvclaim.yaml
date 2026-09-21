@@ -60,11 +60,15 @@ allowVolumeExpansion: true
 {{- if eq .Values.clusterProvider "aks" }}
 parameters:
   protocol: nfs
-  encryptInTransit: {{ .Values.persistentVolume.aks.nfs.encryptInTransit | quote }}
+{{- if eq .Values.persistentVolume.aks.nfs.secureTransferRequired true }}
+  encryptInTransit: {{ "true" | quote }}
+{{- end }}
 mountOptions:
   - nconnect=4
+{{- if eq .Values.persistentVolume.aks.nfs.secureTransferRequired true }}
   - noresvport
   - actimeo=30
+{{- end }}
 {{- else if .Values.persistentVolume.oke.blockVolume.blockVolumeEnable }}
 parameters:
   type: "oci-bv"
@@ -135,7 +139,13 @@ spec:
   - rw
   - vers=4.1
 {{- end }}
- {{- else if and (eq .Values.clusterProvider "aks") ( .Values.persistentVolume.aks.nfs.fileShareName ) }}
+{{- else if and (eq .Values.clusterProvider "aks") ( .Values.persistentVolume.aks.nfs.fileShareName ) }}
+{{- if eq .Values.persistentVolume.aks.nfs.secureTransferRequired false }}
+ storageClassName: azurefile-csi-nfs
+ nfs:
+   path: /{{ .Values.persistentVolume.aks.nfs.fileShareName }}
+   server: {{ .Values.persistentVolume.aks.nfs.hostName }}
+{{- else }}
  {{- $nfsFileShareValue := trimPrefix "/" .Values.persistentVolume.aks.nfs.fileShareName }}
  {{- $nfsPathParts := splitList "/" $nfsFileShareValue }}
  {{- $nfsStorageAccount := default "" .Values.persistentVolume.aks.nfs.storageAccount }}
@@ -167,6 +177,7 @@ spec:
    {{ with .Values.persistentVolume.aks.nfs.subscriptionID }}
    subscriptionID: {{ . | quote }}
    {{ end }}
+{{- end }}
  {{- else if and (eq .Values.clusterProvider "aks") ( .Values.persistentVolume.aks.fileShareName ) }}
  storageClassName: azurefile
  azureFile:

@@ -16,17 +16,18 @@ persistentVolume:
     # Recommended for Linux containers: use NFS file shares for better performance and persistence.
     # NFS is supported only with Azure Premium FileStorage accounts.
     nfs:
+      
+      # Set secureTransferRequrieed as true if you enabled it in the storage account:
+      secureTransferRequired: false
+      
       # Keep the same existing Azure Files share so all Bold BI data is preserved.
       # If you choose a fresh deployment, use a new file share name.
       fileShareName: ''
 
       # Azure Storage account and resource group containing the existing share.
-      storageAccount: ''
+      # Mandatory for secureTransferRequired protocol.
       resourceGroup: ''
       subscriptionID: ''
-
-      # Mount through the AZNFS TLS tunnel.
-      encryptInTransit: true
 
       # Not used by the Azure Files CSI NFS mount.
       hostName: ''
