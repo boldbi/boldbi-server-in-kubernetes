@@ -264,8 +264,8 @@ For Helm chart, you'll need to craft a `values.yaml`.
         upgradeCenter.enabled
       </td>
       <td>
-        Set to <code>true</code> to deploy and enable the Bold BI Upgrade Center service. Default is <code>false</code>.<br /><br />
-        For full configuration options (credentials, resources, Playwright runner), refer to the <a href="../docs/upgrade-center-deployment.md#deploy-upgrade-center-using-helm">Upgrade Center configuration guide</a>.
+        Set to <code>true</code> to deploy and enable the Upgrade Center service for Bold BI. Default is <code>false</code>.<br /><br />
+        For full configuration options (credentials, resources, and validation settings), refer to the <a href="../docs/upgrade-center-deployment.md#deploy-upgrade-center-using-helm">Upgrade Center configuration guide</a>.
       </td>
     </tr>
     </table>
@@ -387,7 +387,7 @@ The following environment variables are optional. If not provided, a manual Appl
 
 ## Environment variables for configuring Upgrade Center
 
-The following environment variables are used to configure the Bold BI Upgrade Center. Set `upgradeCenter.enabled: true` to deploy the service. For full deployment steps and configuration details, refer to the [Upgrade Center configuration guide](../docs/upgrade-center-deployment.md#deploy-upgrade-center-using-helm).
+The following environment variables are used to configure the Upgrade Center service for Bold BI. Set `upgradeCenter.enabled: true` to deploy the service. For full deployment steps and configuration details, refer to the [Upgrade Center configuration guide](../docs/upgrade-center-deployment.md#deploy-upgrade-center-using-helm).
 
 <table>
     <tr>
@@ -403,7 +403,7 @@ The following environment variables are used to configure the Bold BI Upgrade Ce
        upgradeCenter.enabled
       </td>
       <td>
-       Set to <code>true</code> to deploy and enable the Bold BI Upgrade Center service. Default is <code>false</code>.
+       Set to <code>true</code> to deploy and enable the Upgrade Center service for Bold BI. Default is <code>false</code>.
       </td>
     </tr>
     <tr>

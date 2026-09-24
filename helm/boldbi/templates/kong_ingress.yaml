@@ -108,7 +108,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: boldbi-upgrade-center
+                name: bold-upgrade-center
                 port:
                   number: 80
           {{- end }}               
@@ -183,7 +183,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: boldbi-upgrade-center
+                name: bold-upgrade-center
                 port:
                   number: 80
           {{- end }}

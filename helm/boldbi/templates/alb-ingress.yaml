@@ -60,14 +60,14 @@ spec:
         pathType: ImplementationSpecific
         backend:
           service:
-            name: boldbi-upgrade-center
+            name: bold-upgrade-center
             port:
               number: 80
       - path: "/upgrade-center/*"
         pathType: ImplementationSpecific
         backend:
           service:
-            name: boldbi-upgrade-center
+            name: bold-upgrade-center
             port:
               number: 80
       {{- end }}
