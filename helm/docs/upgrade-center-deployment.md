@@ -5,6 +5,8 @@ This section explains how to enable the Upgrade Center for Bold BI deployed on K
 
 Upgrade Center enables administrators to check for available releases, initiate upgrades, and monitor upgrade progress directly from the Bold BI administration panel without manually updating Kubernetes resources.
 
+> **Note:** Bold BI uses the shared Bold Upgrade Center application configured in `BoldBI` deployment mode. The Playwright validation image is resolved from the release information API and is not configured in the Helm values file.
+
 ## Sections
 
 - [Deploy Upgrade Center using kubectl](#deploy-upgrade-center-using-kubectl)
@@ -21,26 +23,26 @@ Download the following YAML files for Upgrade Center deployment:
 
 | File | Description |
 |------|-------------|
-| [`boldbi-upgrade-center.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v16.2.5/deploy/boldbi-upgrade-center/boldbi-upgrade-center.yaml) | ServiceAccount, RBAC Role/RoleBinding, Deployment, and Service for the Upgrade Center |
-| [`boldbi-upgrade-center-playwright-secret.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v16.2.5/deploy/boldbi-upgrade-center/boldbi-upgrade-center-playwright-secret.yaml) | Secret containing the Bold BI admin credentials used by the Playwright automation runner |
-| [`ingressroute-upgrade-center.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v16.2.5/deploy/boldbi-upgrade-center/ingressroute-upgrade-center.yaml) | Ingress/IngressRoute to expose the Upgrade Center endpoint |
+| [`bold-upgrade-center.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/bold-upgrade-center/bold-upgrade-center.yaml) | ServiceAccount, RBAC Role/RoleBinding, Deployment, and Service for the Upgrade Center |
+| [`bold-upgrade-center-playwright-secret.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/bold-upgrade-center/bold-upgrade-center-playwright-secret.yaml) | Secret containing the Bold BI admin credentials used by the Playwright automation runner |
+| [`ingressroute-upgrade-center.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/bold-upgrade-center/ingressroute-upgrade-center.yaml) | Ingress/IngressRoute to expose the Upgrade Center endpoint |
 
 
 ### Step 2 — Configure admin credentials
 
 > **RBAC scope:** The Upgrade Center RBAC is namespace-scoped. The manifest creates a `Role` and `RoleBinding` in the same namespace where Bold BI is deployed, and it does not require cluster-wide `ClusterRole` access. Apply the manifest in the Bold BI namespace so the Upgrade Center can manage only the Bold BI resources in that namespace.
 
-Open `boldbi-upgrade-center-playwright-secret.yaml` and replace the placeholder values with your Bold BI administrator credentials:
+Open `bold-upgrade-center-playwright-secret.yaml` and replace the placeholder values with your Bold BI administrator credentials:
 
 ```yaml
 apiVersion: v1
 kind: Secret
 metadata:
-  name: boldbi-upgrade-center-playwright
+  name: bold-upgrade-center-playwright
 type: Opaque
 stringData:
-  ADMIN_USERNAME: "<your-admin-email>"
-  ADMIN_PASSWORD: "<your-admin-password>"
+  BOLDBI_ADMIN_USERNAME: "<your-admin-email>"
+  BOLDBI_ADMIN_PASSWORD: "<your-admin-password>"
 ```
 
 > **Note:** These credentials must match the administrator account configured during Bold BI's initial setup. The Playwright runner uses them to automate the upgrade workflow on your behalf.
@@ -69,11 +71,11 @@ tls:
 Run the following commands in the namespace where Bold BI is deployed (default: `bold-services`):
 
 ```sh
-kubectl apply -f boldbi-upgrade-center-playwright-secret.yaml
+kubectl apply -f bold-upgrade-center-playwright-secret.yaml
 ```
 
 ```sh
-kubectl apply -f boldbi-upgrade-center.yaml
+kubectl apply -f bold-upgrade-center.yaml
 ```
 
 ```sh
@@ -85,7 +87,7 @@ kubectl apply -f ingressroute-upgrade-center.yaml
 Confirm that the Upgrade Center pod is running:
 
 ```sh
-kubectl get pods -n bold-services -l app.kubernetes.io/name=boldbi-upgrade-center
+kubectl get pods -n bold-services -l app.kubernetes.io/name=bold-upgrade-center
 ```
 
 ### Step 6 — Access the Upgrade Center
@@ -191,20 +193,20 @@ helm upgrade --install boldbi boldbi/boldbi \
 Check that all Upgrade Center pods are running:
 
 ```sh
-kubectl get pods -n bold-services -l app.kubernetes.io/name=boldbi-upgrade-center
+kubectl get pods -n bold-services -l app.kubernetes.io/name=bold-upgrade-center
 ```
 
 You should see the pod in `Running` state:
 
 ```
 NAME                                    READY   STATUS    RESTARTS   AGE
-boldbi-upgrade-center-xxxxxxxxx-xxxxx   1/1     Running   0          1m
+bold-upgrade-center-xxxxxxxxx-xxxxx   1/1     Running   0          1m
 ```
 
 Verify the service is created:
 
 ```sh
-kubectl get svc boldbi-upgrade-center -n bold-services
+kubectl get svc bold-upgrade-center -n bold-services
 ```
 
 ## Access the Upgrade Center from Bold BI

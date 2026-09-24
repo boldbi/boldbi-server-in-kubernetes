@@ -343,10 +343,10 @@ queryMetricsWithQueryInDebugFiles:
 querymetricswithqueryinHAR:
   enable: false
 
-## Bold BI Upgrade Center Configuration
+## Upgrade Center Configuration for Bold BI
 upgradeCenter:
-  # Set this to true to deploy the Bold BI Upgrade Center service. Set it to false to skip Upgrade Center resources.
-  enabled: true
+  # Set this to true to deploy the Upgrade Center service for Bold BI. Set it to false to skip Upgrade Center resources.
+  enabled: false
   # Root User administrator credentials used by Upgrade Center validation jobs.
   # 
   # Credentials provided under rootUserDetails take priority. These values are used only when rootUserDetails is empty.
@@ -356,8 +356,8 @@ upgradeCenter:
 
   # Upgrade Center web application image.
   image:
-    repo: docker.io/syncfusion/boldbi-upgrade-center
-    tag: v1.0
+    repo: docker.io/syncfusion/bold-upgrade-center
+    tag: 1.0.0
     pullPolicy: Always
 
   # CPU and memory requests/limits for the Upgrade Center web application pod.

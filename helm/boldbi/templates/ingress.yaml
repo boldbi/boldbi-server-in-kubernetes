@@ -226,11 +226,11 @@ spec:
             backend:
               {{- if $ingressApiIsStable }}
               service:
-                name: boldbi-upgrade-center
+                name: bold-upgrade-center
                 port:
                   number: 80
               {{- else }}
-              serviceName: boldbi-upgrade-center
+              serviceName: bold-upgrade-center
               servicePort: 80
               {{- end }}
           {{- end }}
@@ -405,11 +405,11 @@ spec:
             backend:
               {{- if $ingressApiIsStable }}
               service:
-                name: boldbi-upgrade-center
+                name: bold-upgrade-center
                 port:
                   number: 80
               {{- else }}
-              serviceName: boldbi-upgrade-center
+              serviceName: bold-upgrade-center
               servicePort: 80
               {{- end }}
           {{- end }}
@@ -709,11 +709,11 @@ spec:
             backend:
               {{- if $ingressApiIsStable }}
               service:
-                name: boldbi-upgrade-center
+                name: bold-upgrade-center
                 port:
                   number: 80
               {{- else }}
-              serviceName: boldbi-upgrade-center
+              serviceName: bold-upgrade-center
               servicePort: 80
               {{- end }}
           {{- end }}
@@ -852,11 +852,11 @@ spec:
             backend:
               {{- if $ingressApiIsStable }}
               service:
-                name: boldbi-upgrade-center
+                name: bold-upgrade-center
                 port:
                   number: 80
               {{- else }}
-              serviceName: boldbi-upgrade-center
+              serviceName: bold-upgrade-center
               servicePort: 80
               {{- end }}
           {{- end }}

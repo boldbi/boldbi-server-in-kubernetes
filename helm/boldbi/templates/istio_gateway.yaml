@@ -170,7 +170,7 @@ spec:
     - destination:
         port:
           number: 80
-        host: boldbi-upgrade-center
+        host: bold-upgrade-center
   {{- end }}
   - match:
     - uri:

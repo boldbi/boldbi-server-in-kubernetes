@@ -61,7 +61,7 @@ spec:
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: boldbi-upgrade-center-trailing-slash
+  name: bold-upgrade-center-trailing-slash
   {{- include "boldbi.namespace" . | nindent 2 }}
 spec:
   redirectRegex:
@@ -320,10 +320,10 @@ spec:
       kind: Rule
       middlewares:
         - name: body-limit-200m
-        - name: boldbi-upgrade-center-trailing-slash
+        - name: bold-upgrade-center-trailing-slash
       priority: 1000
       services:
-        - name: boldbi-upgrade-center
+        - name: bold-upgrade-center
           port: 80
           serversTransport: long-timeouts-transport
           sticky:
@@ -581,10 +581,10 @@ spec:
       kind: Rule
       middlewares:
         - name: body-limit-200m
-        - name: boldbi-upgrade-center-trailing-slash
+        - name: bold-upgrade-center-trailing-slash
       priority: 1000
       services:
-        - name: boldbi-upgrade-center
+        - name: bold-upgrade-center
           port: 80
           serversTransport: long-timeouts-transport
           sticky:
