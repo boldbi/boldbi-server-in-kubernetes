@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bold-upgrade-center-ingress
+  namespace: bold-services
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-body-size: 200m
+spec:
+  # tls:
+  # - hosts:
+  #   - example.com
+  #   secretName: bold-tls
+  rules:
+  - # host: example.com
+    http:
+      paths:
+      - path: /upgrade-center(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: bold-upgrade-center
+            port:
+              number: 80

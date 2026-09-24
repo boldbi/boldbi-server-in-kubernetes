@@ -1,0 +1,42 @@
+# Use this file only when Upgrade Center is deployed with an AWS Application Load Balancer.
+# If your main ALB ingress uses alb.ingress.kubernetes.io/group.name, use the same group name here.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bold-upgrade-center-ingress
+  namespace: bold-services
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/certificate-arn:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: instance
+    alb.ingress.kubernetes.io/backend-protocol: HTTP
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/success-codes: 200,404
+    alb.ingress.kubernetes.io/healthcheck-path: /upgrade-center/health-check
+    # alb.ingress.kubernetes.io/group.name: "bold-services"
+spec:
+  ingressClassName: "alb"
+  # tls:
+  # - hosts:
+  #   - example.com
+  #   secretName: bold-tls
+  rules:
+  - # host: example.com
+    http:
+      paths:
+      - path: "/upgrade-center"
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: bold-upgrade-center
+            port:
+              number: 80
+      - path: "/upgrade-center/*"
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: bold-upgrade-center
+            port:
+              number: 80

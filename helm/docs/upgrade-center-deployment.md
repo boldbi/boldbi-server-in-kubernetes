@@ -25,8 +25,17 @@ Download the following YAML files for Upgrade Center deployment:
 |------|-------------|
 | [`bold-upgrade-center.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/bold-upgrade-center/bold-upgrade-center.yaml) | ServiceAccount, RBAC Role/RoleBinding, Deployment, and Service for the Upgrade Center |
 | [`bold-upgrade-center-playwright-secret.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/bold-upgrade-center/bold-upgrade-center-playwright-secret.yaml) | Secret containing the Bold BI admin credentials used by the Playwright automation runner |
-| [`ingressroute-upgrade-center.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/bold-upgrade-center/ingressroute-upgrade-center.yaml) | Ingress/IngressRoute to expose the Upgrade Center endpoint |
 
+Download the route manifest that matches the load balancer used by your Bold BI deployment:
+
+| Load balancer | Route manifest |
+|---------------|----------------|
+| NGINX Ingress | [`nginx-ingress-upgrade-center.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/bold-upgrade-center/nginx-ingress-upgrade-center.yaml) |
+| AWS Application Load Balancer | [`alb-ingress-upgrade-center.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/bold-upgrade-center/alb-ingress-upgrade-center.yaml) |
+| Kong Ingress | [`kong-ingress-upgrade-center.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/bold-upgrade-center/kong-ingress-upgrade-center.yaml) |
+| Traefik | [`ingressroute-upgrade-center.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/bold-upgrade-center/ingressroute-upgrade-center.yaml) |
+| Azure Application Gateway for Containers | [`azure-alb-gateway-upgrade-center.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/bold-upgrade-center/azure-alb-gateway-upgrade-center.yaml) |
+| Istio | [`istio-upgrade-center.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/bold-upgrade-center/istio-upgrade-center.yaml) |
 
 ### Step 2 — Configure admin credentials
 
@@ -48,9 +57,11 @@ stringData:
 > **Note:** These credentials must match the administrator account configured during Bold BI's initial setup. The Playwright runner uses them to automate the upgrade workflow on your behalf.
 
 
-### Step 3 — Configure the Ingress route
+### Step 3 — Configure the route manifest
 
-Open `ingressroute-upgrade-center.yaml` and update the hostname and TLS secret to match your Bold BI deployment:
+Open the selected route manifest and update the hostname, gateway, TLS secret, or ALB group settings to match your Bold BI deployment.
+
+For Traefik, update the host value:
 
 ```yaml
 - kind: Rule
@@ -59,12 +70,14 @@ Open `ingressroute-upgrade-center.yaml` and update the hostname and TLS secret t
 
 Replace `<your-domain.com>` with your actual application domain (e.g., `bi.example.com`).
 
-If your deployment uses **HTTPS**, ensure the `tls.secretName` matches the TLS secret used by your existing Bold BI IngressRoute:
+If your deployment uses **HTTPS**, ensure the route manifest uses the same TLS secret as the existing Bold BI ingress configuration:
 
 ```yaml
 tls:
   secretName: bold-tls   # Replace with your TLS secret name if different
 ```
+
+> **Note:** For standalone Kubernetes manifests, Upgrade Center routing is optional. Apply only the route manifest for the load balancer used in your environment.
 
 ### Step 4 — Apply the manifests
 
@@ -79,7 +92,7 @@ kubectl apply -f bold-upgrade-center.yaml
 ```
 
 ```sh
-kubectl apply -f ingressroute-upgrade-center.yaml
+kubectl apply -f <selected-upgrade-center-route-manifest>.yaml
 ```
 
 ### Step 5 — Verify the deployment
