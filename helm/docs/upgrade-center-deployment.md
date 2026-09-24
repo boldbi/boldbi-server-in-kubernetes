@@ -77,7 +77,7 @@ tls:
   secretName: bold-tls   # Replace with your TLS secret name if different
 ```
 
-> **Note:** For standalone Kubernetes manifests, Upgrade Center routing is optional. Apply only the route manifest for the load balancer used in your environment.
+> **Note:** Upgrade Center is optional for standalone Kubernetes deployments. If you deploy Upgrade Center, you must also apply the route manifest that matches the load balancer used in your environment.
 
 ### Step 4 — Apply the manifests
 
