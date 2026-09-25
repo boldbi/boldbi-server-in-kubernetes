@@ -1,0 +1,39 @@
+# Use this file only when Upgrade Center is deployed with Istio.
+# Keep the host and gateway values aligned with the main Bold BI Istio Gateway and VirtualService.
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: bold-upgrade-center-virtual-service
+  namespace: bold-services
+spec:
+  hosts:
+  - "*"
+  # - example.com
+  gateways:
+  - bold-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /upgrade-center
+    route:
+    - destination:
+        port:
+          number: 80
+        host: bold-upgrade-center.bold-services.svc.cluster.local
+    retries:
+      attempts: 3
+      retryOn: gateway-error,connect-failure,refused-stream
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: bold-upgrade-center-rule
+  namespace: bold-services
+spec:
+  host: bold-upgrade-center.bold-services.svc.cluster.local
+  trafficPolicy:
+    loadBalancer:
+      consistentHash:
+        httpCookie:
+          name: bold.k8s.upgrade.center.pod.id
+          ttl: 600s
