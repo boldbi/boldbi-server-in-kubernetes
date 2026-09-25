@@ -90,8 +90,6 @@ spec:
         env:
         - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
           value: k8s
-        - name: BOLD_SERVICES_UPGRADE_CENTER_ENABLE
-          value: "true"
         {{- if $.Values.optionalLibs }}
         - name: INSTALL_OPTIONAL_LIBS
           value: {{ $.Values.optionalLibs }}
