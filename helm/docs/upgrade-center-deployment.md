@@ -50,8 +50,8 @@ metadata:
   name: bold-upgrade-center-playwright
 type: Opaque
 stringData:
-  BOLDBI_ADMIN_USERNAME: "<your-admin-email>"
-  BOLDBI_ADMIN_PASSWORD: "<your-admin-password>"
+  BOLD_ADMIN_USERNAME: "<your-admin-email>"
+  BOLD_ADMIN_PASSWORD: "<your-admin-password>"
 ```
 
 > **Note:** These credentials must match the administrator account configured during Bold BI's initial setup. The Playwright runner uses them to automate the upgrade workflow on your behalf.
