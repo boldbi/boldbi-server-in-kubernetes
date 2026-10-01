@@ -227,6 +227,13 @@ instanceConfig:
     maxReplicas: 20
     cpuResourceRequests: 250m
     memoryResourceRequests: 750Mi
+  - app: bold-mcp
+    product: boldbi
+    replicaCount: 1
+    minReplicas: 1
+    maxReplicas: 20
+    cpuResourceRequests: 250m
+    memoryResourceRequests: 750Mi
   - app: reports-web
     product: boldreports
     replicaCount: 1
@@ -256,6 +263,20 @@ instanceConfig:
     cpuResourceRequests: 250m
     memoryResourceRequests: 750Mi
   - app: reports-reportservice
+    product: boldreports
+    replicaCount: 1
+    minReplicas: 1
+    maxReplicas: 20
+    cpuResourceRequests: 250m
+    memoryResourceRequests: 750Mi
+  - app: reports-ai
+    product: boldreports
+    replicaCount: 1
+    minReplicas: 1
+    maxReplicas: 20
+    cpuResourceRequests: 250m
+    memoryResourceRequests: 750Mi
+  - app: reports-mcp
     product: boldreports
     replicaCount: 1
     minReplicas: 1

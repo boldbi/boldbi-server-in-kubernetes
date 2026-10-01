@@ -64,6 +64,8 @@ spec:
         image: "{{ $.Values.image.biRepo }}/bold-etl:{{ $.Values.image.biTag }}"
         {{- else if eq $service.app "bold-ai" }}
         image: "{{ $.Values.image.biRepo }}/bold-ai:{{ $.Values.image.biTag }}"
+        {{- else if eq $service.app "bold-mcp" }}
+        image: "{{ $.Values.image.biRepo }}/bold-mcp:{{ $.Values.image.biTag }}"
         {{- else if eq $service.app "reports-web" }}
         image: "{{ $.Values.image.reportsRepo }}/boldreports-server:{{ $.Values.image.reportsTag }}"
         {{- else if eq $service.app "reports-api" }}
@@ -74,6 +76,10 @@ spec:
         image: "{{ $.Values.image.reportsRepo }}/boldreports-designer:{{ $.Values.image.reportsTag }}"
         {{- else if eq $service.app "reports-viewer" }}
         image: "{{ $.Values.image.reportsRepo }}/boldreports-viewer:{{ $.Values.image.reportsTag }}"
+        {{- else if eq $service.app "reports-ai" }}
+        image: "{{ $.Values.image.reportsRepo }}/boldreports-ai:{{ $.Values.image.reportsTag }}"
+        {{- else if eq $service.app "reports-mcp" }}
+        image: "{{ $.Values.image.reportsRepo }}/boldreports-mcp:{{ $.Values.image.reportsTag }}"
         {{- end }}
         {{- if eq $service.app "bold-ai" }}
         ports:
@@ -157,6 +163,19 @@ spec:
           periodSeconds: 15
           failureThreshold: 3
           timeoutSeconds: 30
+        {{- else if eq $service.app "bold-mcp" }}
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          {{- if or (eq $service.app "id-web") (eq $service.app "bi-web") }}
+          initialDelaySeconds: 30
+          {{- else }}
+          initialDelaySeconds: 20
+          {{- end }}
+          periodSeconds: 15
+          failureThreshold: 3
+          timeoutSeconds: 30
         {{- else }}
         readinessProbe:
           httpGet:
@@ -193,6 +212,8 @@ spec:
         - mountPath: /application/etl/etlservice/logs/k8s
         {{- else if eq $service.app "bold-ai" }}
         - mountPath: /application/ai/aiservice/logs/k8s
+        {{- else if eq $service.app "bold-mcp" }}
+        - mountPath: /application/ai/mcpservice/logs/k8s
         {{- end }}
         {{- else if eq $service.product "boldreports" }}
         - mountPath: /application/app_data
@@ -207,6 +228,10 @@ spec:
         - mountPath: /application/reporting/viewer/logs
         {{- else if eq $service.app "reports-reportservice" }}
         - mountPath: /application/reporting/reportservice/logs
+        {{- else if eq $service.app "reports-ai" }}
+        - mountPath: /application/ai/reportsaiservice/logs
+        {{- else if eq $service.app "reports-mcp" }}
+        - mountPath: /application/ai/reportsmcpservice/logs
         {{- end }}
         {{- end }}
           name: log4net-config-volume

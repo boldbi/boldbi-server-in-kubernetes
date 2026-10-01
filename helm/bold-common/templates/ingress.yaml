@@ -315,6 +315,63 @@ spec:
               serviceName: bold-ai-service
               servicePort: 6010
               {{- end }}
+
+          {{- if not .Values.subApplication.subPath }}
+          - path: /boldservices/mcp/*
+          {{- else }}
+          - path: /{{ $.Values.subApplication.subPath }}/mcp/*
+          {{- end }}
+            {{- if $ingressSupportsPathType }}
+            pathType: {{ $ingressPathType }}
+            {{- end }}
+            backend:
+              {{- if $ingressApiIsStable }}
+              service:
+                name: bold-mcp-service
+                port:
+                  number: 6011
+              {{- else }}
+              serviceName: bold-mcp-service
+              servicePort: 6011
+              {{- end }}
+          
+          {{- if not .Values.subApplication.subPath }}
+          - path: /boldservices/reportsai/*
+          {{- else }}
+          - path: /{{ $.Values.subApplication.subPath }}/reportsai/*
+          {{- end }}
+            {{- if $ingressSupportsPathType }}
+            pathType: {{ $ingressPathType }}
+            {{- end }}
+            backend:
+              {{- if $ingressApiIsStable }}
+              service:
+                name: reports-ai-service
+                port:
+                  number: 6555
+              {{- else }}
+              serviceName: reports-ai-service
+              servicePort: 6555
+              {{- end }}
+          
+          {{- if not .Values.subApplication.subPath }}
+          - path: /boldservices/reportsmcp/*
+          {{- else }}
+          - path: /{{ $.Values.subApplication.subPath }}/reportsmcp/*
+          {{- end }}
+            {{- if $ingressSupportsPathType }}
+            pathType: {{ $ingressPathType }}
+            {{- end }}
+            backend:
+              {{- if $ingressApiIsStable }}
+              service:
+                name: reports-mcp-service
+                port:
+                  number: 6556
+              {{- else }}
+              serviceName: reports-mcp-service
+              servicePort: 6556
+              {{- end }}
 ---
 apiVersion: {{ template "ingress.apiVersion" . }}
 kind: Ingress 
@@ -584,6 +641,20 @@ spec:
               serviceName: bold-ai-service
               servicePort: 6010
               {{- end }}
+          - path: /mcp/*
+            {{- if $ingressSupportsPathType }}
+            pathType: {{ $ingressPathType }}
+            {{- end }}
+            backend:
+              {{- if $ingressApiIsStable }}
+              service:
+                name: bold-mcp-service
+                port:
+                  number: 6011
+              {{- else }}
+              serviceName: bold-mcp-service
+              servicePort: 6011
+              {{- end }}
           - path: /reporting/*
             {{- if $ingressSupportsPathType }}
             pathType: {{ $ingressPathType }}
@@ -657,6 +728,34 @@ spec:
               {{- else }}
               serviceName: reports-reportservice-service
               servicePort: 6553
+              {{- end }}
+          - path: /reportsai/
+            {{- if $ingressSupportsPathType }}
+            pathType: {{ $ingressPathType }}
+            {{- end }}
+            backend:
+              {{- if $ingressApiIsStable }}
+              service:
+                name: reports-ai-service
+                port:
+                  number: 6555
+              {{- else }}
+              serviceName: reports-ai-service
+              servicePort: 6555
+              {{- end }}
+          - path: /reportsmcp/
+            {{- if $ingressSupportsPathType }}
+            pathType: {{ $ingressPathType }}
+            {{- end }}
+            backend:
+              {{- if $ingressApiIsStable }}
+              service:
+                name: reports-mcp-service
+                port:
+                  number: 6556
+              {{- else }}
+              serviceName: reports-mcp-service
+              servicePort: 6556
               {{- end }}
 ---              
 apiVersion: {{ template "ingress.apiVersion" . }}
