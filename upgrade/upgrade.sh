@@ -33,5 +33,7 @@ else
 	kubectl set image deployment/bi-api-deployment bi-api-container=syncfusion/boldbi-server-api:$version --namespace=$namespace --record 
 	kubectl set image deployment/bi-jobs-deployment bi-jobs-container=syncfusion/boldbi-server-jobs:$version --namespace=$namespace --record 
 	kubectl set image deployment/bi-dataservice-deployment bi-dataservice-container=syncfusion/boldbi-designer:$version --namespace=$namespace --record
-	kubectl set image deployment/bold-etl-deployment bold-etl-container=syncfusion/bold-etl:$version --namespace=$namespace --record 
+	kubectl set image deployment/bold-etl-deployment bold-etl-container=syncfusion/bold-etl:$version --namespace=$namespace --record
+	kubectl set image deployment/bold-ai-deployment bold-ai-container=syncfusion/bold-ai:$version --namespace=$namespace --record 
+	kubectl set image deployment/bold-mcp-deployment bold-mcp-container=syncfusion/boldbi-mcp-server:$version --namespace=$namespace --record  
 fi
