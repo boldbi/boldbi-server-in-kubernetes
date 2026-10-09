@@ -367,11 +367,10 @@ spec:
         Host(`{{ $host }}`) && PathPrefix(`{{ printf "%s/aiservice" $subPath }}`)
         {{- end }}
       kind: Rule
+      {{- if $.Values.loadBalancer.enableGzip }}
       middlewares:
-        {{- if $.Values.loadBalancer.enableGzip }}
         - name: gzip-compress
-        {{- end }}
-        - name: body-limit-200m
+      {{- end }}
       services:
         - name: bold-ai-service
           port: 6010
@@ -719,11 +718,10 @@ spec:
         Host(`{{ $baseHost }}`) && PathPrefix(`{{ printf "%s/aiservice" $subPath }}`)
         {{- end }}
       kind: Rule
+      {{- if .Values.loadBalancer.enableGzip }}
       middlewares:
-        {{- if .Values.loadBalancer.enableGzip }}
         - name: gzip-compress
-        {{- end }}
-        - name: body-limit-200m
+      {{- end }}
       services:
         - name: bold-ai-service
           port: 6010
