@@ -274,7 +274,6 @@ spec:
         {{- if $.Values.loadBalancer.enableGzip }}
         - name: gzip-compress
         {{- end }}
-        - name: body-limit-200m
       services:
         - name: bold-ai-service
           port: 6010
