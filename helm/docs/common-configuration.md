@@ -370,6 +370,39 @@ versions:
 ````
 > **NOTE:**  We need give a latest version of `idp` when you have latest version of Bold BI or Bold Reports version
 
+## Upgrade Center
+
+Upgrade Center is an optional feature for Bold Common Helm deployments. It allows administrators to check available Bold BI and Bold Reports releases, run validation, perform the upgrade, monitor progress, and roll back from the application.
+
+To enable Upgrade Center, set `upgradeCenter.enabled` to `true` in your values file.
+
+```yaml
+upgradeCenter:
+  enabled: true
+
+  secret:
+    # If validation jobs must use credentials other than rootUserDetails, set these values.
+    adminUsername: ""
+    adminPassword: ""
+
+  image:
+    repo: docker.io/syncfusion/bold-upgrade-center
+    tag: 1.0.0
+    pullPolicy: Always
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1536Mi
+```
+
+When `upgradeCenter.secret` values are empty, the chart uses `rootUserDetails.email` and `rootUserDetails.password` for validation jobs. The administrator credential is IDP-specific and is shared by Bold BI and Bold Reports validation.
+
+Upgrade Center validation uses a temporary shared volume for Playwright state. The shared volume uses the cluster default StorageClass. Ensure the cluster has a working default StorageClass and the matching CSI driver installed before enabling Upgrade Center.
+
 ## Load Balancing
 
 ### Ingress-Nginx

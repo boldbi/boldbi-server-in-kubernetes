@@ -38,6 +38,15 @@ spec:
     sectionName: http
     {{- end }}
   rules:
+  {{- if .Values.upgradeCenter.enabled }}
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /upgrade-center
+    backendRefs:
+    - name: bold-upgrade-center
+      port: 80
+  {{- end }}
   - matches:
     - path:
         type: PathPrefix

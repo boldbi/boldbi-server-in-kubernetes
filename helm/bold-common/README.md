@@ -122,6 +122,14 @@ For Helm chart, you'll need to craft a `values.yaml`.
     </tr>
     <tr>
       <td>
+       upgradeCenter
+      </td>
+      <td>
+       Set <i>upgradeCenter.enabled</i> to <i>true</i> to deploy Upgrade Center for the combined Bold BI and Bold Reports deployment. Please refer to <a href='/helm/docs/common-configuration.md#upgrade-center'>this</a> section for configuration details.
+      </td>
+    </tr>
+    <tr>
+      <td>
        autoscaling
       </td>
       <td>
