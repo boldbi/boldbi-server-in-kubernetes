@@ -80,7 +80,7 @@ metadata:
   name: bold-upgrade-center-config
   namespace: bold-services
 data:
-  # Set to Standalone to read mounted product files and use Upgrade Center's local login.
+  # Set to Standalone to read product storage and use Upgrade Center's local login.
   integrationMode: "IdpIntegrated"
   deploymentMode: "BoldBI"
   biReleaseVersionsApiUrl: "https://releases.boldbi.com/version/json"
@@ -236,6 +236,8 @@ spec:
                   key: integrationMode
             - name: UpgradeCenter__Configuration__ConfigFilePath
               value: "/app/app_data/configuration/config.json"
+            - name: BOLD_SERVICES_PV_USED
+              value: "true"
             - name: UpgradeCenter__Configuration__PrivateKeyFilePath
               value: "/app/app_data/configuration/privatekeys.dat"
             - name: UpgradeCenter__DeploymentMode

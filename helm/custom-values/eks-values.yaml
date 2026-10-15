@@ -332,7 +332,7 @@ querymetricswithqueryinHAR:
 upgradeCenter:
   # Set this to true to deploy the Upgrade Center service for Bold BI. Set it to false to skip Upgrade Center resources.
   enabled: false
-  # IdpIntegrated preserves existing SSO; Standalone uses mounted product files and local login.
+  # IdpIntegrated preserves existing SSO; Standalone uses product storage and local login.
   integrationMode: IdpIntegrated
   # Root User administrator credentials used by Upgrade Center validation jobs.
   # 

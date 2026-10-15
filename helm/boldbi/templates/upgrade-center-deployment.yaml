@@ -4,6 +4,8 @@
 {{- fail "upgradeCenter.integrationMode must be IdpIntegrated or Standalone." }}
 {{- end }}
 {{- $isStandalone := eq (lower $integrationMode) "standalone" }}
+{{- $storage := include "boldbi.upgradeCenter.storage" . | fromYaml }}
+{{- $usesFiles := and $isStandalone (eq $storage.source "FileSystem") }}
 {{- $hasRealPV := or
     .Values.persistentVolume.useExistingClaim
     (and (eq .Values.clusterProvider "onpremise")
@@ -23,10 +25,13 @@
        (and .Values.persistentVolume.oke.blockVolume.blockVolumeEnable
          (ne (default "" .Values.persistentVolume.oke.blockVolume.blockVolumeCapacity) ""))))
 }}
-{{- if and $isStandalone (not $hasRealPV) }}
-{{- fail "Standalone Upgrade Center requires the product App_Data PVC. Configure persistentVolume for your cluster or set persistentVolume.useExistingClaim and claimName." }}
+{{- if and $usesFiles (not $hasRealPV) }}
+{{- fail "Filesystem Standalone Upgrade Center requires the product App_Data PVC. Configure persistentVolume for your cluster or set persistentVolume.useExistingClaim and claimName." }}
 {{- end }}
-{{- if and $isStandalone .Values.persistentVolume.useExistingClaim (empty .Values.persistentVolume.claimName) }}
+{{- if and (not $hasRealPV) (eq $storage.source "FileSystem") }}
+{{- fail "Upgrade Center without a product PV requires the product's existing object-storage settings." }}
+{{- end }}
+{{- if and $usesFiles .Values.persistentVolume.useExistingClaim (empty .Values.persistentVolume.claimName) }}
 {{- fail "persistentVolume.claimName is required when Standalone Upgrade Center uses an existing claim." }}
 {{- end }}
 ---
@@ -190,6 +195,10 @@ spec:
       # app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
+      {{- if and (or $isStandalone (not $hasRealPV)) (ne $storage.source "FileSystem") }}
+      annotations:
+        checksum/upgrade-center-storage: {{ $storage.credentials | toJson | sha256sum }}
+      {{- end }}
       labels:
         app.kubernetes.io/name: bold-upgrade-center
         app.kubernetes.io/instance: {{ .Release.Name }}
@@ -265,6 +274,10 @@ spec:
             - containerPort: 8080
               name: http
           envFrom:
+            {{- if and (or $isStandalone (not $hasRealPV)) (ne $storage.source "FileSystem") }}
+            - secretRef:
+                name: bold-upgrade-center-storage
+            {{- end }}
             - secretRef:
                 name: bold-upgrade-center-playwright
                 optional: true
@@ -280,7 +293,19 @@ spec:
                 configMapKeyRef:
                   name: bold-upgrade-center-config
                   key: integrationMode
-            {{- if $isStandalone }}
+            - name: BOLD_SERVICES_PV_USED
+              value: {{ $hasRealPV | quote }}
+            {{- if or $isStandalone (not $hasRealPV) }}
+            {{- if not $usesFiles }}
+            {{- range $name, $value := $storage.environment }}
+            {{- if ne (toString $value) "" }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if $usesFiles }}
             - name: UpgradeCenter__Configuration__ConfigFilePath
               value: "/app/app_data/configuration/config.json"
             - name: UpgradeCenter__Configuration__PrivateKeyFilePath
@@ -493,7 +518,7 @@ spec:
               cpu: {{ .Values.upgradeCenter.resources.limits.cpu }}
               memory: {{ .Values.upgradeCenter.resources.limits.memory }}
           volumeMounts:
-            {{- if $isStandalone }}
+            {{- if $usesFiles }}
             - name: product-app-data
               mountPath: /app/app_data
               readOnly: true
@@ -505,7 +530,7 @@ spec:
               name: upgrade-center-volume
             {{- end }}
       volumes:
-        {{- if $isStandalone }}
+        {{- if $usesFiles }}
         - name: product-app-data
           persistentVolumeClaim:
             {{- if .Values.persistentVolume.useExistingClaim }}
