@@ -222,6 +222,8 @@ service:
 upgradeCenter:
   # Set this to true to deploy the Upgrade Center service for the combined Bold BI and Bold Reports deployment.
   enabled: false
+  # IdpIntegrated preserves existing SSO; Standalone uses mounted product files and local login.
+  integrationMode: IdpIntegrated
 
   # Administrator credentials used by Upgrade Center validation jobs.
   # Credentials provided under rootUserDetails are used by default.

@@ -7,8 +7,41 @@ Upgrade Center enables administrators to check for available releases, initiate 
 
 > **Note:** Bold BI uses the shared Bold Upgrade Center application configured in `BoldBI` deployment mode. The Playwright validation image is resolved from the release information API and is not configured in the Helm values file.
 
+## Standalone Mode
+
+`IdpIntegrated` remains the default. Standalone Mode supports only filesystem-based deployments using PVs and PVCs. It reads the existing product configuration and encrypted private key from the product PVC and provides a separate Upgrade Center login. Use an Upgrade Center image that includes Standalone Mode support.
+
+For Helm, add this to your existing values file:
+
+```yaml
+upgradeCenter:
+  enabled: true
+  integrationMode: Standalone
+```
+
+The chart reuses the product PVC with a read-only configuration mount and skips the IDP configuration init container. File paths are managed internally. The application base URL, including any base path, is read automatically from `InternalAppUrls.Idp` in the mounted configuration; no separate Upgrade Center application URL is required. Helm rejects Standalone Mode if product storage or administrator credentials are missing.
+
+For kubectl, set this key under `bold-upgrade-center-config.data` in `bold-upgrade-center.yaml`:
+
+```yaml
+integrationMode: "Standalone"
+```
+
+Ensure both Deployment PVC references use the product claim (`bold-fileserver-claim` in the supplied manifests). The init container skips the IDP API wait in Standalone Mode. Supply application administrator credentials through the existing Secret's `BOLD_ADMIN_USERNAME` and `BOLD_ADMIN_PASSWORD`, or the Helm `rootUserDetails` / `upgradeCenter.secret` settings described below. These credentials are used for local login and Playwright.
+
+The configuration and key must be current and belong to the same installation. No additional configuration PVC is created; the existing writable Upgrade Center report/session-key storage is retained.
+
+Restart Upgrade Center after changing mounted configuration or Secret credentials, and after changing the ConfigMap with kubectl:
+
+```sh
+kubectl rollout restart deployment/bold-upgrade-center -n bold-services
+```
+
+Open `https://<your-domain>/upgrade-center` and sign in with the configured administrator credentials. HTTPS is required. Product version/health APIs and Playwright still require application access. Set `integrationMode: IdpIntegrated` to restore the existing IDP/UMS login workflow.
+
 ## Sections
 
+- [Standalone Mode](#standalone-mode)
 - [Deploy Upgrade Center using kubectl](#deploy-upgrade-center-using-kubectl)
 - [Deploy Upgrade Center using Helm](#deploy-upgrade-center-using-helm)
 - [Access the Upgrade Center from Bold BI](#access-the-upgrade-center-from-bold-bi)
@@ -182,6 +215,7 @@ upgradeCenter:
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `upgradeCenter.enabled` | Set to `true` to deploy and enable the Upgrade Center service. | `false` |
+| `upgradeCenter.integrationMode` | `IdpIntegrated` or `Standalone`; independent of the selected product. | `IdpIntegrated` |
 | `upgradeCenter.secret.adminUsername` | Bold BI administrator username. Used only when `rootUserDetails.email` is not provided. | `""` |
 | `upgradeCenter.secret.adminPassword` | Bold BI administrator password. Used only when `rootUserDetails.password` is not provided. | `""` |
 | `upgradeCenter.resources.requests.cpu` | CPU request for Upgrade Center pods. | `250m` |
@@ -223,6 +257,8 @@ kubectl get svc bold-upgrade-center -n bold-services
 ```
 
 ## Access the Upgrade Center from Bold BI
+
+In Standalone Mode, open `/upgrade-center` directly or use **Check for Upgrades**, then sign in on the Upgrade Center login page. The steps below describe the existing IDP-integrated entry point.
 
 Once all services are running and the ingress is active:
 

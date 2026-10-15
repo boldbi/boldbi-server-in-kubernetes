@@ -372,36 +372,31 @@ versions:
 
 ## Upgrade Center
 
-Upgrade Center is an optional feature for Bold Common Helm deployments. It allows administrators to check available Bold BI and Bold Reports releases, run validation, perform the upgrade, monitor progress, and roll back from the application.
+Upgrade Center is optional and disabled by default. Bold Common supports Helm deployment only. It provides product selection for Bold BI and Bold Reports within the shared Upgrade Center application.
 
-To enable Upgrade Center, set `upgradeCenter.enabled` to `true` in your values file.
+The default `IdpIntegrated` mode keeps the existing IDP configuration and UMS login workflow. To use Standalone Mode, add this to your existing Common values file:
 
 ```yaml
 upgradeCenter:
   enabled: true
-
-  secret:
-    # If validation jobs must use credentials other than rootUserDetails, set these values.
-    adminUsername: ""
-    adminPassword: ""
-
-  image:
-    repo: docker.io/syncfusion/bold-upgrade-center
-    tag: 1.0.0
-    pullPolicy: Always
-
-  resources:
-    requests:
-      cpu: 250m
-      memory: 512Mi
-    limits:
-      cpu: "1"
-      memory: 1536Mi
+  integrationMode: Standalone
 ```
 
-When `upgradeCenter.secret` values are empty, the chart uses `rootUserDetails.email` and `rootUserDetails.password` for validation jobs. The administrator credential is IDP-specific and is shared by Bold BI and Bold Reports validation.
+Standalone Mode supports only filesystem-based deployments using PVs and PVCs. Use an Upgrade Center image that includes Standalone Mode support, configured through the existing `upgradeCenter.image.repo` and `tag` settings. The chart reuses the product PVC with a read-only configuration mount and skips the IDP configuration init container. File paths are managed internally. Existing writable report/session-key storage is retained; no separate configuration PVC is created.
 
-Upgrade Center validation uses a temporary shared volume for Playwright state. The shared volume uses the cluster default StorageClass. Ensure the cluster has a working default StorageClass and the matching CSI driver installed before enabling Upgrade Center.
+The application base URL, including any base path, is read automatically from `InternalAppUrls.Idp` in the mounted configuration. No separate Upgrade Center application URL is required. Configuration and key files must be current and belong to the same installation. Helm rejects Standalone Mode if product storage or administrator credentials are missing.
+
+By default, the shared administrator credentials come from `rootUserDetails.email` and `rootUserDetails.password`. Override them with `upgradeCenter.secret.adminUsername` and `adminPassword` when needed. They are stored in the existing Secret as `BOLD_ADMIN_USERNAME` and `BOLD_ADMIN_PASSWORD` and are used for local login and both products' Playwright validation. Do not add passwords to a ConfigMap.
+
+Apply the values using your existing Helm release name and namespace:
+
+```sh
+helm upgrade --install <release-name> ./helm/bold-common -n bold-services -f <common-values.yaml>
+```
+
+Use HTTPS, open `https://<your-domain>/upgrade-center`, and sign in with the configured administrator credentials. Product version/health checks and Playwright still require application access. Set `integrationMode: IdpIntegrated` to switch back. Mode changes roll the pod automatically. Restart `deployment/bold-upgrade-center` after changing mounted configuration or Secret credentials.
+
+Playwright image selection remains release-API driven. Its temporary shared state volume still requires a working default StorageClass and matching CSI driver. Standalone Mode does not change those existing settings.
 
 ## Load Balancing
 
