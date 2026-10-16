@@ -7,6 +7,7 @@
 {{- if .Values.subApplication.enabled }}
   {{- $subPath = printf "/%s" (.Values.subApplication.subPath | default "boldservices") }}
 {{- end }}
+{{- $upgradeCenterPath := printf "%s/upgrade-center" $subPath }}
 
 apiVersion: traefik.io/v1alpha1
 kind: ServersTransport
@@ -54,6 +55,20 @@ spec:
     replacement: /$2
 
 ---
+{{- if .Values.upgradeCenter.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: bold-upgrade-center-trailing-slash
+  {{- include "boldbi.namespace" . | nindent 2 }}
+spec:
+  redirectRegex:
+    regex: ^(https?://[^/]+{{ $upgradeCenterPath }})$
+    replacement: ${1}/
+    permanent: true
+
+---
+{{- end }}
 {{- if (and (hasKey .Values.loadBalancer "multipleHost") (hasKey .Values.loadBalancer.multipleHost "hostArray") (gt (len .Values.loadBalancer.multipleHost.hostArray) 0)) }}
   {{- range $groupIdx, $group := .Values.loadBalancer.multipleHost.hostArray }}
     {{- range $hostIdx, $host := $group.hosts }}
@@ -78,6 +93,24 @@ spec:
     - web
   {{- end }}
   routes:
+    {{- if $.Values.upgradeCenter.enabled }}
+    - match: |
+        {{- if $isIP }}
+        PathPrefix(`{{ $upgradeCenterPath }}`)
+        {{- else }}
+        Host(`{{ $host }}`) && PathPrefix(`{{ $upgradeCenterPath }}`)
+        {{- end }}
+      kind: Rule
+      middlewares:
+        - name: body-limit-200m
+        - name: bold-upgrade-center-trailing-slash
+      priority: 1000
+      services:
+        - name: bold-upgrade-center
+          port: 80
+          serversTransport: long-timeouts-transport
+
+    {{- end }}
     - match: |
         {{- if and $isIP $.Values.subApplication.enabled }}
         PathPrefix(`{{ $subPath }}`)
@@ -429,6 +462,24 @@ spec:
     - web
   {{- end }}
   routes:
+    {{- if .Values.upgradeCenter.enabled }}
+    - match: |
+        {{- if $isIP }}
+        PathPrefix(`{{ $upgradeCenterPath }}`)
+        {{- else }}
+        Host(`{{ $baseHost }}`) && PathPrefix(`{{ $upgradeCenterPath }}`)
+        {{- end }}
+      kind: Rule
+      middlewares:
+        - name: body-limit-200m
+        - name: bold-upgrade-center-trailing-slash
+      priority: 1000
+      services:
+        - name: bold-upgrade-center
+          port: 80
+          serversTransport: long-timeouts-transport
+
+    {{- end }}
     - match: |
         {{- if and $isIP $.Values.subApplication.enabled }}
         PathPrefix(`{{ $subPath }}`)
