@@ -97,6 +97,20 @@ spec:
   - matches:
     - path:
         type: PathPrefix
+        value: /reportsai
+    backendRefs:
+    - name: reports-ai-service
+      port: 6555
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /reportsmcp
+    backendRefs:
+    - name: reports-mcp-service
+      port: 6556
+  - matches:
+    - path:
+        type: PathPrefix
         value: /bi
     backendRefs:
     - name: bi-web-service
@@ -129,6 +143,13 @@ spec:
     backendRefs:
     - name: bold-ai-service
       port: 6010
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /mcp
+    backendRefs:
+    - name: bold-mcp-service
+      port: 6011
   - matches:
     - path:
         type: PathPrefix
