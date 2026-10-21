@@ -270,6 +270,52 @@ spec:
 
     - match: |
         {{- if $isIP }}
+        PathPrefix(`{{ printf "%s/reportsai" $subPath }}`)
+        {{- else }}
+        Host(`{{ $host }}`) && PathPrefix(`{{ printf "%s/reportsai" $subPath }}`)
+        {{- end }}
+      kind: Rule
+      middlewares:
+        {{- if $.Values.loadBalancer.enableGzip }}
+        - name: gzip-compress
+        {{- end }}
+        - name: body-limit-200m
+      services:
+        - name: reports-ai-service
+          port: 6555
+          serversTransport: long-timeouts-transport
+          {{- if $.Values.loadBalancer.affinityCookie.enable }}
+          sticky:
+            cookie:
+              name: bold.k8s.pod.id
+              maxAge: {{ default "600" $.Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
+          {{- end }}
+    
+    - match: |
+        {{- if $isIP }}
+        PathPrefix(`{{ printf "%s/reportsmcp" $subPath }}`)
+        {{- else }}
+        Host(`{{ $host }}`) && PathPrefix(`{{ printf "%s/reportsmcp" $subPath }}`)
+        {{- end }}
+      kind: Rule
+      middlewares:
+        {{- if $.Values.loadBalancer.enableGzip }}
+        - name: gzip-compress
+        {{- end }}
+        - name: body-limit-200m
+      services:
+        - name: reports-mcp-service
+          port: 6556
+          serversTransport: long-timeouts-transport
+          {{- if $.Values.loadBalancer.affinityCookie.enable }}
+          sticky:
+            cookie:
+              name: bold.k8s.pod.id
+              maxAge: {{ default "600" $.Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
+          {{- end }}
+
+    - match: |
+        {{- if $isIP }}
         PathPrefix(`{{ printf "%s/bi/api" $subPath }}`)
         {{- else }}
         Host(`{{ $host }}`) && PathPrefix(`{{ printf "%s/bi/api" $subPath }}`)
@@ -367,14 +413,36 @@ spec:
         Host(`{{ $host }}`) && PathPrefix(`{{ printf "%s/aiservice" $subPath }}`)
         {{- end }}
       kind: Rule
+      {{- if $.Values.loadBalancer.enableGzip }}
+      middlewares:
+        - name: gzip-compress
+      {{- end }}
+      services:
+        - name: bold-ai-service
+          port: 6010
+          serversTransport: long-timeouts-transport
+          {{- if $.Values.loadBalancer.affinityCookie.enable }}
+          sticky:
+            cookie:
+              name: bold.k8s.pod.id
+              maxAge: {{ default "600" $.Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
+          {{- end }}
+    
+    - match: |
+        {{- if $isIP }}
+        PathPrefix(`{{ printf "%s/mcp" $subPath }}`)
+        {{- else }}
+        Host(`{{ $host }}`) && PathPrefix(`{{ printf "%s/mcp" $subPath }}`)
+        {{- end }}
+      kind: Rule
       middlewares:
         {{- if $.Values.loadBalancer.enableGzip }}
         - name: gzip-compress
         {{- end }}
         - name: body-limit-200m
       services:
-        - name: bold-ai-service
-          port: 6010
+        - name: bold-mcp-service
+          port: 6011
           serversTransport: long-timeouts-transport
           {{- if $.Values.loadBalancer.affinityCookie.enable }}
           sticky:
@@ -619,6 +687,52 @@ spec:
               name: bold.k8s.pod.id
               maxAge: {{ default "600" .Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
           {{- end }}
+    
+    - match: |
+        {{- if $isIP }}
+        PathPrefix(`{{ printf "%s/reportsai" $subPath }}`)
+        {{- else }}
+        Host(`{{ $baseHost }}`) && PathPrefix(`{{ printf "%s/reportsai" $subPath }}`)
+        {{- end }}
+      kind: Rule
+      middlewares:
+        {{- if .Values.loadBalancer.enableGzip }}
+        - name: gzip-compress
+        {{- end }}
+        - name: body-limit-200m
+      services:
+        - name: reports-ai-service
+          port: 6555
+          serversTransport: long-timeouts-transport
+          {{- if .Values.loadBalancer.affinityCookie.enable }}
+          sticky:
+            cookie:
+              name: bold.k8s.pod.id
+              maxAge: {{ default "600" .Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
+          {{- end }}
+    
+    - match: |
+        {{- if $isIP }}
+        PathPrefix(`{{ printf "%s/reportsmcp" $subPath }}`)
+        {{- else }}
+        Host(`{{ $baseHost }}`) && PathPrefix(`{{ printf "%s/reportsmcp" $subPath }}`)
+        {{- end }}
+      kind: Rule
+      middlewares:
+        {{- if .Values.loadBalancer.enableGzip }}
+        - name: gzip-compress
+        {{- end }}
+        - name: body-limit-200m
+      services:
+        - name: reports-mcp-service
+          port: 6556
+          serversTransport: long-timeouts-transport
+          {{- if .Values.loadBalancer.affinityCookie.enable }}
+          sticky:
+            cookie:
+              name: bold.k8s.pod.id
+              maxAge: {{ default "600" .Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
+          {{- end }}
 
     - match: |
         {{- if $isIP }}
@@ -719,14 +833,36 @@ spec:
         Host(`{{ $baseHost }}`) && PathPrefix(`{{ printf "%s/aiservice" $subPath }}`)
         {{- end }}
       kind: Rule
+      {{- if .Values.loadBalancer.enableGzip }}
+      middlewares:
+        - name: gzip-compress
+      {{- end }}
+      services:
+        - name: bold-ai-service
+          port: 6010
+          serversTransport: long-timeouts-transport
+          {{- if .Values.loadBalancer.affinityCookie.enable }}
+          sticky:
+            cookie:
+              name: bold.k8s.pod.id
+              maxAge: {{ default "600" .Values.loadBalancer.affinityCookie.affinityCookieExpiration }}
+          {{- end }}
+    
+    - match: |
+        {{- if $isIP }}
+        PathPrefix(`{{ printf "%s/mcp" $subPath }}`)
+        {{- else }}
+        Host(`{{ $baseHost }}`) && PathPrefix(`{{ printf "%s/mcp" $subPath }}`)
+        {{- end }}
+      kind: Rule
       middlewares:
         {{- if .Values.loadBalancer.enableGzip }}
         - name: gzip-compress
         {{- end }}
         - name: body-limit-200m
       services:
-        - name: bold-ai-service
-          port: 6010
+        - name: bold-mcp-service
+          port: 6011
           serversTransport: long-timeouts-transport
           {{- if .Values.loadBalancer.affinityCookie.enable }}
           sticky:
