@@ -118,7 +118,7 @@ ociStorage:
   # OCI secret key for authentication (e.g., your OCI user secret key)
   secretKey: 
   # Type of OCI storage
-  storageType: 3
+  storageType: 4
 
 # For Amazon S3 Bucket configuration, set enabled as true.
 s3Storage:
@@ -417,6 +417,8 @@ licenseKeyDetails:
 upgradeCenter:
   # Set this to true to deploy the Upgrade Center service for Bold BI. Set it to false to skip Upgrade Center resources.
   enabled: false
+  # IdpIntegrated preserves existing SSO; Standalone uses product storage and local login.
+  integrationMode: IdpIntegrated
   # Root User administrator credentials used by Upgrade Center validation jobs.
   # 
   # Credentials provided under rootUserDetails take priority. These values are used only when rootUserDetails is empty.

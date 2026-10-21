@@ -80,6 +80,8 @@ metadata:
   name: bold-upgrade-center-config
   namespace: bold-services
 data:
+  # Set to Standalone to read product storage and use Upgrade Center's local login.
+  integrationMode: "IdpIntegrated"
   deploymentMode: "BoldBI"
   biReleaseVersionsApiUrl: "https://releases.boldbi.com/version/json"
   idpApi: "http://id-api-service:6001/api"
@@ -142,6 +144,11 @@ spec:
           image: docker.io/curlimages/curl:8.10.1
           imagePullPolicy: IfNotPresent
           env:
+            - name: UPGRADE_CENTER_INTEGRATION_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: bold-upgrade-center-config
+                  key: integrationMode
             - name: IDP_API_URL
               valueFrom:
                 configMapKeyRef:
@@ -153,6 +160,18 @@ spec:
           args:
             - |
               set -eu
+
+              case "$(printf '%s' "$UPGRADE_CENTER_INTEGRATION_MODE" | tr '[:upper:]' '[:lower:]')" in
+                standalone)
+                  echo "Standalone mode: skipping the IDP configuration API wait."
+                  exit 0
+                  ;;
+                idpintegrated) ;;
+                *)
+                  echo "integrationMode must be IdpIntegrated or Standalone."
+                  exit 1
+                  ;;
+              esac
 
               configuration_url="${IDP_API_URL%/}/configuration"
               timeout_seconds=300
@@ -210,6 +229,17 @@ spec:
               value: "http://+:8080"
             - name: ASPNETCORE_FORWARDEDHEADERS_ENABLED
               value: "true"
+            - name: UpgradeCenter__IntegrationMode
+              valueFrom:
+                configMapKeyRef:
+                  name: bold-upgrade-center-config
+                  key: integrationMode
+            - name: UpgradeCenter__Configuration__ConfigFilePath
+              value: "/app/app_data/configuration/config.json"
+            - name: BOLD_SERVICES_PV_USED
+              value: "true"
+            - name: UpgradeCenter__Configuration__PrivateKeyFilePath
+              value: "/app/app_data/configuration/privatekeys.dat"
             - name: UpgradeCenter__DeploymentMode
               valueFrom:
                 configMapKeyRef:
@@ -417,11 +447,18 @@ spec:
               cpu: "1"
               memory: 1536Mi
           volumeMounts:
+            - name: product-app-data
+              mountPath: /app/app_data
+              readOnly: true
             - name: tmp
               mountPath: /tmp
             - mountPath: /app/App_Data
               name: upgrade-center-volume
       volumes:
+        - name: product-app-data
+          persistentVolumeClaim:
+            claimName: bold-fileserver-claim
+            readOnly: true
         - name: tmp
           emptyDir: {}
         - name: upgrade-center-volume
