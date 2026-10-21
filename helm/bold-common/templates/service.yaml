@@ -46,8 +46,14 @@ spec:
     port: 6553
     {{- else if eq $service.app "reports-viewer" }}
     port: 6554
+    {{- else if eq $service.app "reports-ai" }}
+    port: 6555
+    {{- else if eq $service.app "reports-mcp" }}
+    port: 6556
     {{- else if eq $service.app "bold-ai" }}
     port: 6010
+    {{- else if eq $service.app "bold-mcp" }}
+    port: 6011
     {{- end }}
     {{- if eq $service.app "bold-ai" }}
     targetPort: 8080
