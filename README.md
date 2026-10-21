@@ -82,6 +82,6 @@ It is the image user's responsibility to ensure that any use of this image compl
 
 [How to deploy Bold BI and Bold Reports in Alibaba Cloud Kubernetes (ACK) Cluster?](docs/FAQ/how-to-deploy-bold-bi-and-bold-reports-in-an-ack-cluster.md)
 
-[How to upgrade Bold BI using kubectl?](https://github.com/boldbi/boldbi-server-in-kubernetes/blob/Adding-upgrade-doc-in-faq/upgrade/upgrade.md)
+[How to upgrade Bold BI using kubectl?](https://github.com/boldbi/boldbi-server-in-kubernetes/blob/main/docs/upgrade.md)
 
 [How to migrate the file share from Azure SMB Fileshare to NFS Fileshare?](https://github.com/boldbi/boldbi-server-in-kubernetes/blob/main/docs/FAQ/how-to-migrate-app_data-from-azure-smb-fileshare-to-nfs-fileshare.md)
