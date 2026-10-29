@@ -207,7 +207,13 @@ spec:
       automountServiceAccountToken: true
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
+      {{- if kindIs "string" .Values.imagePullSecrets }}
       - name: {{ .Values.imagePullSecrets }}
+      {{- else }}
+      {{- range .Values.imagePullSecrets }}
+      - name: {{ if kindIs "map" . }}{{ .name }}{{ else }}{{ . }}{{ end }}
+      {{- end }}
+      {{- end }}
       {{- end }}
       {{- if not $isStandalone }}
       initContainers:

@@ -393,13 +393,13 @@ upgradeCenter:
 
 Use an Upgrade Center image built with the latest Standalone support through the existing `upgradeCenter.image.repo` and `tag` settings. No additional Upgrade Center storage selector or duplicate connection settings are needed. The templates reuse the product's configured PV/PVC and storage settings; they do not probe storage providers.
 
-The Common product chart remains PVC-backed, so keep its existing `persistentVolume` configuration. Filesystem Standalone mounts that product PVC read-only; internal file paths stay in templates. This change does not introduce a non-PVC Common product deployment. Common supports Helm only.
+> **Important:** Bold Common requires a persistent volume (PV/PVC). Object storage (S3, Azure Blob, OCI) is not supported by the `bold-common` chart, so Standalone mode **cannot** be used without a PV. If `integrationMode: Standalone` is set without a configured `persistentVolume` (or `useExistingClaim` with `claimName`), `helm install/upgrade` stops with the error "Filesystem Standalone Upgrade Center requires the product App_Data PVC". `IdpIntegrated` mode is not affected.
 
-For product deployments configured with object storage, the shared Upgrade Center application reads the same `BOLD_SERVICES_STORAGETYPE` and connection settings as the product. Credentials are passed through Secrets and the storage reader only downloads objects. Existing endpoint/connection formats are preserved. If both a PVC and object storage are configured, the selected product backend determines where configuration is read.
+The Common product chart remains PVC-backed, so keep its existing `persistentVolume` configuration. Filesystem Standalone mounts that product PVC read-only; internal file paths stay in templates. This change does not introduce a non-PVC Common product deployment. Common supports Helm only.
 
 The application URL comes from `InternalAppUrls.Idp`; no separate URL is required. Object-storage mode also checks master database runtime settings for newer configuration. Access/decryption errors stop loading rather than using stale settings.
 
-Common retains its existing PVC-backed report/session-key storage. For supported no-PV BI/Reports deployments, the same Upgrade Center application persists its own reports and authentication keys in existing object storage, under the isolated `app_data/upgrade-center/` prefix, without creating a dedicated data PVC. That prefix requires read/list/write access, plus delete access for report retention; product configuration remains read-only. Authentication keys must not expire. Playwright's temporary shared-state PVC and cleanup remain separate and unchanged.
+Common retains its existing PVC-backed report/session-key storage. Playwright's temporary shared-state PVC and cleanup remain separate and unchanged. (The object-storage behavior described for Bold BI-only deployments in the Bold BI Upgrade Center guide does not apply to Bold Common.)
 
 By default, the shared administrator credentials come from `rootUserDetails.email` and `rootUserDetails.password`. Override them with `upgradeCenter.secret.adminUsername` and `adminPassword` when needed. They are stored in the existing Secret as `BOLD_ADMIN_USERNAME` and `BOLD_ADMIN_PASSWORD` and are used for local login and both products' Playwright validation. Do not add passwords to a ConfigMap.
 
