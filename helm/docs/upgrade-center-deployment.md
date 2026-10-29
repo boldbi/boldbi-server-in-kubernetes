@@ -7,6 +7,8 @@ Upgrade Center enables administrators to check for available releases, initiate 
 
 > **Note:** Bold BI uses the shared Bold Upgrade Center application configured in `BoldBI` deployment mode. The Playwright validation image is resolved from the release information API and is not configured in the Helm values file.
 
+> **Bold Common (Bold BI and Bold Reports together):** see the [Upgrade Center section of the Bold Common configuration guide](common-configuration.md#upgrade-center). Bold Common requires a PV for Standalone mode.
+
 ## Integration Mode Compatibility
 
 `IdpIntegrated` mode is supported from Bold BI **16.3.5** onward. For a Bold BI 16.3.5 deployment, use the `16.3.5_upgrade_center` application image tag to enable this integration.
@@ -82,7 +84,7 @@ Restart Upgrade Center after changing mounted configuration, credentials, or kub
 
 > **Mode requirement:** Choose the mode based on the currently installed version, not the target upgrade version. IDP-integrated mode requires Bold BI 16.3.5 or later; version 16.3.5 requires the `16.3.5_upgrade_center` application image tag. Earlier versions must use Standalone mode.
 
-### Step 1 — Download the Upgrade Center manifests
+### Step 1 - Download the Upgrade Center manifests
 
 Download the following YAML files for Upgrade Center deployment:
 
@@ -102,7 +104,7 @@ Download the route manifest that matches the load balancer used by your Bold BI 
 | Azure Application Gateway for Containers | [`azure-alb-gateway-upgrade-center.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/bold-upgrade-center/azure-alb-gateway-upgrade-center.yaml) |
 | Istio | [`istio-upgrade-center.yaml`](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/main/deploy/bold-upgrade-center/istio-upgrade-center.yaml) |
 
-### Step 2 — Configure admin credentials
+### Step 2 - Configure admin credentials
 
 > **RBAC scope:** The Upgrade Center RBAC is namespace-scoped. The manifest creates a `Role` and `RoleBinding` in the same namespace where Bold BI is deployed, and it does not require cluster-wide `ClusterRole` access. Apply the manifest in the Bold BI namespace so the Upgrade Center can manage only the Bold BI resources in that namespace.
 
@@ -122,7 +124,7 @@ stringData:
 > **Note:** These credentials must match the administrator account configured during Bold BI's initial setup. The Playwright runner uses them to automate the upgrade workflow on your behalf.
 
 
-### Step 3 — Configure the route manifest
+### Step 3 - Configure the route manifest
 
 Open the selected route manifest and update the hostname, gateway, TLS secret, or ALB group settings to match your Bold BI deployment.
 
@@ -144,7 +146,7 @@ tls:
 
 > **Note:** Upgrade Center is optional for standalone Kubernetes deployments. If you deploy Upgrade Center, you must also apply the route manifest that matches the load balancer used in your environment.
 
-### Step 4 — Apply the manifests
+### Step 4 - Apply the manifests
 
 Run the following commands in the namespace where Bold BI is deployed (default: `bold-services`):
 
@@ -160,7 +162,7 @@ kubectl apply -f bold-upgrade-center.yaml
 kubectl apply -f <selected-upgrade-center-route-manifest>.yaml
 ```
 
-### Step 5 — Verify the deployment
+### Step 5 - Verify the deployment
 
 Confirm that the Upgrade Center pod is running:
 
@@ -168,7 +170,7 @@ Confirm that the Upgrade Center pod is running:
 kubectl get pods -n bold-services -l app.kubernetes.io/name=bold-upgrade-center
 ```
 
-### Step 6 — Access the Upgrade Center
+### Step 6 - Access the Upgrade Center
 
 See [Access the Upgrade Center from Bold BI](#access-the-upgrade-center-from-bold-bi) below.
 
@@ -215,7 +217,7 @@ Download the appropriate `values.yaml` file based on your Kubernetes platform:
 
 > **StorageClass requirement:** Upgrade Center creates a temporary shared volume for validation state used by the Playwright validation jobs. The Kubernetes cluster must have a working default StorageClass and the matching CSI driver installed. If no default StorageClass is available, the validation pod can remain in `Pending` state while waiting for the shared volume.
 
-### Step 1 — Enable Upgrade Center in values.yaml
+### Step 1 - Enable Upgrade Center in values.yaml
 
 > **RBAC scope:** The Helm chart deploys namespace-scoped RBAC for the Upgrade Center by using a `Role` and `RoleBinding` in the release namespace. It does not require cluster-wide `ClusterRole` access.
 
@@ -226,7 +228,7 @@ upgradeCenter:
   enabled: true
 ```
 
-### Step 2 — Configure admin credentials
+### Step 2 - Configure admin credentials
 
 The Upgrade Center uses administrator credentials to authenticate the Playwright runner during pre-upgrade validation.
 
