@@ -168,6 +168,7 @@ data:
   kubernetesAllowSkipTlsVerifyForLocalDevelopment: "false"
   kubernetesCertificateAuthorityPath: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
   allowedImageRepository0: "us-docker.pkg.dev/boldbi-294612/boldbi"
+  allowedImageRepository2: {{ .Values.image.repo | quote }}
   allowedImageRegistryHost0: "us-docker.pkg.dev"
   allowedImageRepository1: "syncfusion"
   allowedImageRegistryHost1: "docker.io"
@@ -467,6 +468,11 @@ spec:
                 configMapKeyRef:
                   name: bold-upgrade-center-config
                   key: allowedImageRepository0
+            - name: UpgradeCenter__Kubernetes__AllowedImageRepositories__2
+              valueFrom:
+                configMapKeyRef:
+                  name: bold-upgrade-center-config
+                  key: allowedImageRepository2
             - name: UpgradeCenter__Kubernetes__AllowedImageRegistryHosts__0
               valueFrom:
                 configMapKeyRef:

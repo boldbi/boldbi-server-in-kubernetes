@@ -234,7 +234,7 @@ spec:
               {{- end }}
           {{- if $.Values.upgradeCenter.enabled }}
           {{- if not $.Values.subApplication.subPath }}
-          - path: /boldservices{{ $.Values.upgradeCenter.ingressPath }}/*
+          - path: /boldservices/upgrade-center/*
           {{- else }}
           - path: /{{ $.Values.subApplication.subPath }}/upgrade-center/*
           {{- end }}
@@ -754,7 +754,7 @@ spec:
               {{- end }}
 
           {{- if $.Values.upgradeCenter.enabled }}
-          - path: {{ $.Values.upgradeCenter.ingressPath }}/*
+          - path: /upgrade-center/*
             {{- if $ingressSupportsPathType }}
             pathType: {{ $ingressPathType }}
             {{- end }}
