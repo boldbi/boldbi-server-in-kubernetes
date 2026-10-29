@@ -173,10 +173,7 @@ For IDP-integrated mode, see [Access the Upgrade Center from Bold BI](#access-th
 2. View charts in repo
 
     ```console
-    helm search repo boldbi
-
-    NAME            CHART VERSION   APP VERSION     DESCRIPTION
-    boldbi/boldbi   16.2.5           16.2.5         Embed powerful analytics inside your apps and t...
+    helm search repo boldbi/boldbi --versions
     ```
 
 #### Install Chart
@@ -195,13 +192,19 @@ Download the appropriate `values.yaml` file based on your Kubernetes platform:
 * For `ACK` please download the values.yaml file [here](https://github.com/boldbi/boldbi-server-in-kubernetes/blob/main/helm/custom-values/ack-values.yaml).
 
 
-> **Note:** Upgrade Center can be enabled during the initial Bold BI deployment or added to an existing one. Simply set `upgradeCenter.enabled: true` in your values file before running `helm install` or `helm upgrade`.
+> **Existing deployments:** Older charts may not contain Upgrade Center templates. Customers with an older values file must add the Upgrade Center settings in Step 1 and update the existing Helm release to a chart with Standalone support in Step 3. Changing the values file alone is not sufficient. This applies to both PVC and non-PVC deployments.
 
 ### Step 1 - Enable Upgrade Center in values.yaml
 
 > **RBAC scope:** The Helm chart deploys namespace-scoped RBAC for the Upgrade Center by using a `Role` and `RoleBinding` in the release namespace. It does not require cluster-wide `ClusterRole` access.
 
-Open your cluster values file (for example, `helm/custom-values/aks-values.yaml`). To deploy in Standalone mode, set:
+Open your cluster values file (for example, `helm/custom-values/aks-values.yaml`).
+
+For an existing installation, edit the values file already used by that release. Compare it with the latest platform-specific values file linked above and add the missing `upgradeCenter` section shown below. If the section already exists, update it rather than adding a duplicate block. Do not replace your configured file with an unconfigured new values file.
+
+Keep your existing domain, database, storage, ingress, credentials, and component settings. Verify that `image.repo` and `image.tag` match the product images currently installed, so enabling Upgrade Center does not unintentionally upgrade Bold BI itself.
+
+To deploy in Standalone mode, add or update this block:
 
 ```yaml
 upgradeCenter:
@@ -253,13 +256,29 @@ upgradeCenter:
 
 ### Step 3 - Apply the Helm upgrade
 
-Run the `helm upgrade` command with your updated values file. Replace the placeholder values with those matching your deployment:
+Refresh the Helm repository and select the latest published chart that includes Upgrade Center Standalone support:
+
+```sh
+helm repo update boldbi
+helm search repo boldbi/boldbi --versions
+```
+
+`helm repo update` only refreshes the local chart index; it does not update the deployment. Use the selected chart version as `<chart-version>` below. Chart version and product image version are separate: preserve the product image settings from Step 1.
+
+For an existing deployment, use `helm list --namespace bold-services` to confirm the release name. Use that same release name and namespace in the command below; do not create a second release to enable Upgrade Center.
+
+Before applying, preview the command with `--dry-run` added. Review product images, storage, and any other resource changes introduced by the newer chart. Dry-run output may include Secrets; do not share it publicly.
+
+Run the following command with your updated values file. Replace `boldbi` with your existing release name where applicable, and update the namespace and file path to match your deployment:
 
 ```sh
 helm upgrade --install boldbi boldbi/boldbi \
+  --version <chart-version> \
   --namespace bold-services \
   -f values.yaml
 ```
+
+After Step 4, older-version customers should open `https://<your-domain>/upgrade-center` directly and sign in using the configured administrator credentials. The product version upgrade is then started from Upgrade Center.
 
 ### Step 4 - Verify the deployment
 
