@@ -60,18 +60,18 @@ persistentVolume:
 image:
   idRepo: syncfusion
   biRepo: syncfusion
-  reportsRepo: us-docker.pkg.dev/boldreports/multi-container
+  reportsRepo: syncfusion
   # Overrides the image tag whose default is the chart appVersion.
   idTag: 17.1.30
   biTag: 17.1.30
-  reportsTag: 14.1.18
+  reportsTag: 15.1.10
   pullPolicy: IfNotPresent
 imagePullSecrets: []
 
 versions:
-  idp: "5.1.24"
-  bi: "17.1.30"
-  reports: "14.1.18"
+  idp: 5.1.25
+  bi: 17.1.30
+  reports: 15.1.10
 
 loadBalancer:
   type: nginx
@@ -159,7 +159,7 @@ instanceConfig:
     product: boldbi
     replicaCount: 1
     minReplicas: 1
-    maxReplicas: 20
+    maxReplicas: 1
     cpuResourceRequests: 250m
     memoryResourceRequests: 750Mi
   - app: bi-dataservice
@@ -177,6 +177,13 @@ instanceConfig:
     cpuResourceRequests: 250m
     memoryResourceRequests: 750Mi
   - app: bold-ai
+    product: boldbi
+    replicaCount: 1
+    minReplicas: 1
+    maxReplicas: 20
+    cpuResourceRequests: 250m
+    memoryResourceRequests: 750Mi
+  - app: bold-mcp
     product: boldbi
     replicaCount: 1
     minReplicas: 1
@@ -212,6 +219,20 @@ instanceConfig:
     cpuResourceRequests: 250m
     memoryResourceRequests: 750Mi
   - app: reports-reportservice
+    product: boldreports
+    replicaCount: 1
+    minReplicas: 1
+    maxReplicas: 20
+    cpuResourceRequests: 250m
+    memoryResourceRequests: 750Mi
+  - app: reports-ai
+    product: boldreports
+    replicaCount: 1
+    minReplicas: 1
+    maxReplicas: 20
+    cpuResourceRequests: 250m
+    memoryResourceRequests: 750Mi
+  - app: reports-mcp
     product: boldreports
     replicaCount: 1
     minReplicas: 1
