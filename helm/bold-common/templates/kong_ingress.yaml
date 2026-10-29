@@ -40,6 +40,15 @@ spec:
         {{- if .Values.subApplication.enabled }}
           {{- $subPath = printf "/%s" (.Values.subApplication.subPath | default "boldservices") }}
         {{- end }}
+        {{- if .Values.upgradeCenter.enabled }}
+        - path: {{ $subPath }}/upgrade-center
+          pathType: Prefix
+          backend:
+            service:
+              name: bold-upgrade-center
+              port:
+                number: 80
+        {{- end }}
         - path: {{ $subPath }}/reporting/reportservice
           pathType: Prefix
           backend:

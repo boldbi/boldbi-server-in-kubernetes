@@ -52,4 +52,30 @@ spec:
           ttl: {{ $.Values.loadBalancer.affinityCookie.affinityCookieExpiration }}s
 ---
 {{- end }}
+{{- if $.Values.upgradeCenter.enabled }}
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  labels:
+    helm.sh/chart: {{ $.Chart.Name }}_{{ $.Chart.Version }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    {{- if $.Chart.AppVersion }}
+    app.kubernetes.io/version: {{ $.Chart.AppVersion | quote }}
+    {{- end }}
+    app.kubernetes.io/managed-by: {{ $.Release.Service }}
+  name: bold-upgrade-center-rule
+  {{- if eq $.Release.Namespace "default" }}
+  namespace: {{ $.Values.namespace.name }}
+  {{- else }}
+  namespace: {{ $.Release.Namespace }}
+  {{- end }}
+spec:
+  host: bold-upgrade-center
+  trafficPolicy:
+    loadBalancer:
+      consistentHash:
+        httpCookie:
+          name: bold.k8s.upgrade.center.pod.id
+          ttl: {{ $.Values.loadBalancer.affinityCookie.affinityCookieExpiration }}s
+{{- end }}
 {{- end }}

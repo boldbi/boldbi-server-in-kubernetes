@@ -1,4 +1,11 @@
 {{- if .Values.upgradeCenter.enabled }}
+{{- $integrationMode := trim (default "IdpIntegrated" .Values.upgradeCenter.integrationMode) }}
+{{- if not (has (lower $integrationMode) (list "idpintegrated" "standalone")) }}
+{{- fail "upgradeCenter.integrationMode must be IdpIntegrated or Standalone." }}
+{{- end }}
+{{- $isStandalone := eq (lower $integrationMode) "standalone" }}
+{{- $storage := include "boldbi.upgradeCenter.storage" . | fromYaml }}
+{{- $usesFiles := and $isStandalone (eq $storage.source "FileSystem") }}
 {{- $hasRealPV := or
     .Values.persistentVolume.useExistingClaim
     (and (eq .Values.clusterProvider "onpremise")
@@ -18,6 +25,15 @@
        (and .Values.persistentVolume.oke.blockVolume.blockVolumeEnable
          (ne (default "" .Values.persistentVolume.oke.blockVolume.blockVolumeCapacity) ""))))
 }}
+{{- if and $usesFiles (not $hasRealPV) }}
+{{- fail "Filesystem Standalone Upgrade Center requires the product App_Data PVC. Configure persistentVolume for your cluster or set persistentVolume.useExistingClaim and claimName." }}
+{{- end }}
+{{- if and (not $hasRealPV) (eq $storage.source "FileSystem") }}
+{{- fail "Upgrade Center without a product PV requires the product's existing object-storage settings." }}
+{{- end }}
+{{- if and $usesFiles .Values.persistentVolume.useExistingClaim (empty .Values.persistentVolume.claimName) }}
+{{- fail "persistentVolume.claimName is required when Standalone Upgrade Center uses an existing claim." }}
+{{- end }}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -121,6 +137,7 @@ metadata:
     {{- end }}
     app.kubernetes.io/managed-by: {{ .Release.Service }}
 data:
+  integrationMode: {{ $integrationMode | quote }}
   deploymentMode: "BoldBI"
   biReleaseVersionsApiUrl: "https://releases.boldbi.com/version/json"
   idpApi: "http://id-api-service:6001/api"
@@ -178,6 +195,10 @@ spec:
       # app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
+      {{- if and (or $isStandalone (not $hasRealPV)) (ne $storage.source "FileSystem") }}
+      annotations:
+        checksum/upgrade-center-storage: {{ $storage.credentials | toJson | sha256sum }}
+      {{- end }}
       labels:
         app.kubernetes.io/name: bold-upgrade-center
         app.kubernetes.io/instance: {{ .Release.Name }}
@@ -188,6 +209,7 @@ spec:
       imagePullSecrets:
       - name: {{ .Values.imagePullSecrets }}
       {{- end }}
+      {{- if not $isStandalone }}
       initContainers:
         - name: wait-for-idp-configuration
           image: docker.io/curlimages/curl:8.10.1
@@ -243,6 +265,7 @@ spec:
 
               echo "IDP configuration endpoint did not return a usable response within ${timeout_seconds} seconds."
               exit 1
+      {{- end }}
       containers:
         - name: bold-upgrade-center
           image: "{{ .Values.upgradeCenter.image.repo }}:{{ .Values.upgradeCenter.image.tag }}"
@@ -251,6 +274,10 @@ spec:
             - containerPort: 8080
               name: http
           envFrom:
+            {{- if and (or $isStandalone (not $hasRealPV)) (ne $storage.source "FileSystem") }}
+            - secretRef:
+                name: bold-upgrade-center-storage
+            {{- end }}
             - secretRef:
                 name: bold-upgrade-center-playwright
                 optional: true
@@ -261,6 +288,29 @@ spec:
               value: "http://+:8080"
             - name: ASPNETCORE_FORWARDEDHEADERS_ENABLED
               value: "true"
+            - name: UpgradeCenter__IntegrationMode
+              valueFrom:
+                configMapKeyRef:
+                  name: bold-upgrade-center-config
+                  key: integrationMode
+            - name: BOLD_SERVICES_PV_USED
+              value: {{ $hasRealPV | quote }}
+            {{- if or $isStandalone (not $hasRealPV) }}
+            {{- if not $usesFiles }}
+            {{- range $name, $value := $storage.environment }}
+            {{- if ne (toString $value) "" }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if $usesFiles }}
+            - name: UpgradeCenter__Configuration__ConfigFilePath
+              value: "/app/app_data/configuration/config.json"
+            - name: UpgradeCenter__Configuration__PrivateKeyFilePath
+              value: "/app/app_data/configuration/privatekeys.dat"
+            {{- end }}
             - name: UpgradeCenter__DeploymentMode
               valueFrom:
                 configMapKeyRef:
@@ -468,6 +518,11 @@ spec:
               cpu: {{ .Values.upgradeCenter.resources.limits.cpu }}
               memory: {{ .Values.upgradeCenter.resources.limits.memory }}
           volumeMounts:
+            {{- if $usesFiles }}
+            - name: product-app-data
+              mountPath: /app/app_data
+              readOnly: true
+            {{- end }}
             - name: tmp
               mountPath: /tmp
             {{- if $hasRealPV }}
@@ -475,6 +530,16 @@ spec:
               name: upgrade-center-volume
             {{- end }}
       volumes:
+        {{- if $usesFiles }}
+        - name: product-app-data
+          persistentVolumeClaim:
+            {{- if .Values.persistentVolume.useExistingClaim }}
+            claimName: {{ .Values.persistentVolume.claimName }}
+            {{- else }}
+            claimName: {{ printf "%s-claim" .Values.persistentVolume.name }}
+            {{- end }}
+            readOnly: true
+        {{- end }}
         - name: tmp
           emptyDir: {}
         {{- if $hasRealPV }}
