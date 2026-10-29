@@ -7,8 +7,75 @@ Upgrade Center enables administrators to check for available releases, initiate 
 
 > **Note:** Bold BI uses the shared Bold Upgrade Center application configured in `BoldBI` deployment mode. The Playwright validation image is resolved from the release information API and is not configured in the Helm values file.
 
+> **Bold Common (Bold BI and Bold Reports together):** see the [Upgrade Center section of the Bold Common configuration guide](../helm/docs/common-configuration.md#upgrade-center). Bold Common requires a PV for Standalone mode.
+
+## Integration Mode Compatibility
+
+`IdpIntegrated` mode is supported from Bold BI **16.3.5** onward. For a Bold BI 16.3.5 deployment, use the `16.3.5_upgrade_center` application image tag to enable this integration.
+
+Customers running versions earlier than 16.3.5 must use `Standalone` mode to upgrade. Follow the Standalone Mode instructions below and open `/upgrade-center` directly; older versions may not provide the **Check for Upgrades** option.
+
+## Standalone Mode
+
+`IdpIntegrated` remains the default. Standalone mode reads the existing product configuration/private key directly from product storage and provides a local administrator login. Use an Upgrade Center image built with the latest Standalone support.
+
+### Helm
+
+Keep the existing product storage settings and enable Standalone mode:
+
+```yaml
+upgradeCenter:
+  enabled: true
+  integrationMode: Standalone
+```
+
+No additional Upgrade Center storage selector or duplicate connection settings are required. Helm passes the product's existing storage type, location, and credentials. The running application does not probe storage providers or read Helm values files.
+
+| Existing product configuration | Upgrade Center access |
+| --- | --- |
+| Filesystem storage with a configured PV/PVC | Read-only mount of the existing product PVC. Internal file paths are managed by templates. |
+| `s3Storage.enabled: true` | Existing S3 bucket, region, root folder, and credentials. |
+| `azureStorage.enabled: true` | Existing Azure account/container, connection type, endpoint, and credentials. |
+| `ociStorage.enabled: true` | Existing OCI bucket, namespace, region, root folder, and S3-compatible credentials. |
+
+The existing `$hasRealPV` check identifies configured product storage, not whether a live PVC is bound or contains configuration files. When object storage and a PVC are both configured, Upgrade Center follows the product's selected object-storage backend; configuration files may not be stored on that PVC. A PVC can still be used for Upgrade Center's own reports/session keys.
+
+Storage credentials are placed in a Kubernetes Secret, not a ConfigMap. Product configuration/key access remains read-only. Without a product PV, Upgrade Center also uses these credentials to persist its own reports and authentication keys under a separate prefix. Reused product credentials retain their existing permissions. Use HTTPS where available and restrict access to the required locations.
+
+Supply administrator credentials through the existing `rootUserDetails` or `upgradeCenter.secret` settings. Standalone skips the IDP configuration init container. The application URL comes from `InternalAppUrls.Idp`; no separate URL is needed.
+
+### kubectl
+
+For filesystem storage, set `integrationMode: "Standalone"` in `bold-upgrade-center-config.data` in the standard manifest. Ensure its PVC references match the product claim (`bold-fileserver-claim` by default).
+
+For existing non-PVC object-storage deployments, use the overlay from a repository checkout:
+
+1. Configure the Upgrade Center image and administrator credentials in `deploy/bold-upgrade-center`.
+2. Ensure the overlay's `envFrom` references match the storage Secrets already used by the product. It references `azure-blob-storage-secret`, `oci-storage-secret`, and `aws-s3-storage-secret` as optional references, following the non-PVC product manifest pattern. The configured Secret supplies `BOLD_SERVICES_STORAGETYPE` and its matching connection settings. The overlay does not create or replace these product Secrets.
+3. Apply the overlay:
+
+```sh
+kubectl apply -k deploy/bold-upgrade-center-object-storage
+```
+
+The overlay removes the product-PVC configuration mount and IDP wait. Apply the required route manifest for your load balancer as described below. Do not apply the unmodified filesystem base separately over the object-storage overlay.
+
+### State And Access
+
+Without a product PVC, Upgrade Center stores its reports and authentication keys in the existing object storage. No dedicated Upgrade Center PV/PVC is created. This applies to both integration modes; IDP-integrated mode still uses IDP/UMS for configuration and login. Helm passes the existing product storage settings in either mode.
+
+The isolated location is `app_data/upgrade-center/` beneath the existing product storage root. Allow read/list/write access there and delete access for `playwright-reports/` retention. The `data-protection-keys/` location is append-only; protect it from lifecycle expiry and use private storage with encryption at rest. Product configuration/private-key objects are never modified. A read-only credential cannot persist Upgrade Center's own data.
+
+With a product PVC, existing filesystem report/key persistence is unchanged. Playwright still uses its separate temporary shared-state PVC; a working StorageClass is required for those jobs. Storage failures never fall back to temporary local persistence. Existing reports/keys from an older dedicated Upgrade Center data PVC are not migrated automatically: preserve them and plan migration before replacing that deployment. Do not delete existing claims as part of this update.
+
+Object-storage Standalone also reads master database runtime settings for newer configuration. Access/decryption errors or conflicting master database settings stop loading rather than using stale settings. Filesystem Standalone retains its file-only behavior. Do not rotate configuration or keys during an operation.
+
+Restart Upgrade Center after changing mounted configuration, credentials, or kubectl ConfigMaps. Open `https://<your-domain>/upgrade-center` and sign in with the configured administrator credentials. HTTPS is required for the login session. Product version/health APIs and Playwright still require application access. Set `integrationMode: IdpIntegrated` to restore IDP/UMS login.
+
 ## Sections
 
+- [Integration Mode Compatibility](#integration-mode-compatibility)
+- [Standalone Mode](#standalone-mode)
 - [Deploy Upgrade Center using kubectl](#deploy-upgrade-center-using-kubectl)
 - [Deploy Upgrade Center using Helm](#deploy-upgrade-center-using-helm)
 - [Access the Upgrade Center from Bold BI](#access-the-upgrade-center-from-bold-bi)
