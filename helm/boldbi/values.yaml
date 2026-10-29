@@ -59,6 +59,10 @@ persistentVolume:
       # Note that the persistent volume must be in an "Available" state.
       blockVolumeName: ""
 
+  onpremise:
+    # Host path used as the app_data volume for on-premise clusters.
+    hostPath: ''
+
   aks:
     # Recommended for Linux containers: use NFS file shares for better performance and persistence.
     # NFS is supported only with Azure Premium FileStorage accounts.
@@ -191,6 +195,12 @@ loadBalancer:
 
   singleHost: 
     secretName: bold-tls
+
+  # Used only when loadBalancer.type is 'alb'.
+  ssl:
+    enable: false
+    tls: arn
+    arn: ''
   # multipleHost:
   #   hostArray:
   #     - hosts: 

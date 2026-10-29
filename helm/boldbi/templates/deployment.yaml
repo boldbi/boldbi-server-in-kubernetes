@@ -21,6 +21,7 @@
              (and $.Values.persistentVolume.oke.blockVolume.blockVolumeEnable
                   (ne (default "" $.Values.persistentVolume.oke.blockVolume.blockVolumeCapacity) ""))))
 -}}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -366,5 +367,4 @@ spec:
             topologyKey: "kubernetes.io/hostname"   
         {{- end }}                
       {{- end }}      
----
 {{- end }}
