@@ -97,7 +97,7 @@ azureStorage:
 image:
   repo: syncfusion
   # Overrides the image tag whose default is the chart appVersion.
-  tag: 17.1.30
+  tag: 17.2.16
   pullPolicy: IfNotPresent
 imagePullSecrets: []
 

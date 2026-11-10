@@ -34,15 +34,15 @@ image:
   biRepo: syncfusion
   reportsRepo: syncfusion
   # Overrides the image tag whose default is the chart appVersion.
-  idTag: 17.1.30
-  biTag: 17.1.30
+  idTag: 17.2.16
+  biTag: 17.2.16
   reportsTag: 15.1.10
   pullPolicy: IfNotPresent
 imagePullSecrets: []
 
 versions:
   idp: 5.1.25
-  bi: 17.1.30
+  bi: 17.2.16
   reports: 15.1.10
 
 loadBalancer:

@@ -27,7 +27,7 @@ helm repo update
 helm search repo boldbi
 
 NAME            CHART VERSION   APP VERSION     DESCRIPTION
-boldbi/boldbi   17.1.30           17.1.30         Embed powerful analytics inside your apps and t...
+boldbi/boldbi   17.2.16           17.2.16         Embed powerful analytics inside your apps and t...
 ```
 
 _See [helm repo](https://helm.sh/docs/helm/helm_repo/) for command documentation._
@@ -36,11 +36,11 @@ _See [helm repo](https://helm.sh/docs/helm/helm_repo/) for command documentation
 
 For Helm chart, you'll need to craft a `values.yaml`.
 
-* For `GKE` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v17.1.30/helm/custom-values/gke-values.yaml).
-* For `EKS` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v17.1.30/helm/custom-values/eks-values.yaml).
-* For `AKS` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v17.1.30/helm/custom-values/aks-values.yaml).
-* For `OKE` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v17.1.30/helm/custom-values/oke-values.yaml).
-* For `ACK` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v17.1.30/helm/custom-values/ack-values.yaml).
+* For `GKE` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v17.2.16/helm/custom-values/gke-values.yaml).
+* For `EKS` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v17.2.16/helm/custom-values/eks-values.yaml).
+* For `AKS` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v17.2.16/helm/custom-values/aks-values.yaml).
+* For `OKE` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v17.2.16/helm/custom-values/oke-values.yaml).
+* For `ACK` please download the values.yaml file [here](https://raw.githubusercontent.com/boldbi/boldbi-server-in-kubernetes/v17.2.16/helm/custom-values/ack-values.yaml).
 
 > **Note:** Items marked with `*` are mandatory fields in values.yaml
 
@@ -799,7 +799,7 @@ _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documen
      image:
        repo: syncfusion
        # Overrides the image tag whose default is the chart appVersion.
-       tag: 17.1.30
+       tag: 17.2.16
        pullPolicy: IfNotPresent
      imagePullSecrets: []
   ```
