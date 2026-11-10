@@ -353,8 +353,8 @@ image:
   biRepo: syncfusion
   reportsRepo: us-docker.pkg.dev/boldreports/multi-container
   # Overrides the image tag whose default is the chart appVersion.
-  idTag: 17.1.30
-  biTag: 17.1.30
+  idTag: 17.2.16
+  biTag: 17.2.16
   reportsTag: 14.1.18
 ````
 Repository details are available in the image section to refer to the image tags. No need to change the repository details for idRepo, biRepo, and reportsRepo.
@@ -365,7 +365,7 @@ By default, the latest version of Bold BI, Bold Reports, and IDP is in the versi
 ```console
 versions:
   idp: "4.2.1"
-  bi: "17.1.30"
+  bi: "17.2.16"
   reports: "14.1.18"
 ````
 > **NOTE:**  We need give a latest version of `idp` when you have latest version of Bold BI or Bold Reports version

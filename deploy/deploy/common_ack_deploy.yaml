@@ -244,7 +244,7 @@ spec:
     spec:
       containers:
       - name: id-web-container
-        image: syncfusion/bold-identity:17.1.30
+        image: syncfusion/bold-identity:17.2.16
         ports:
         - containerPort: 80
         resources:
@@ -264,7 +264,7 @@ spec:
         - name: ID_Version
           value: "4.2.1"
         - name: BI_Version
-          value: "17.1.30"
+          value: "17.2.16"
         - name: Reports_Version
           value: "14.1.18"
         - name: Is_Common_IDP
@@ -317,7 +317,7 @@ spec:
           name: id-api-volume
       containers:
       - name: id-api-container
-        image: syncfusion/bold-identity-api:17.1.30
+        image: syncfusion/bold-identity-api:17.2.16
         ports:
         - containerPort: 80
         resources:
@@ -378,7 +378,7 @@ spec:
           name: id-ums-volume
       containers:
       - name: id-ums-container
-        image: syncfusion/bold-ums:17.1.30
+        image: syncfusion/bold-ums:17.2.16
         ports:
         - containerPort: 80
         resources:
@@ -445,7 +445,7 @@ spec:
           name: bi-web-volume
       containers:
       - name: bi-web-container
-        image: syncfusion/boldbi-server:17.1.30
+        image: syncfusion/boldbi-server:17.2.16
         ports:
         - containerPort: 80
         resources:
@@ -503,7 +503,7 @@ spec:
           name: bi-api-volume
       containers:
       - name: bi-api-container
-        image: syncfusion/boldbi-server-api:17.1.30
+        image: syncfusion/boldbi-server-api:17.2.16
         ports:
         - containerPort: 80
         resources:
@@ -561,7 +561,7 @@ spec:
           name: bi-jobs-volume
       containers:
       - name: bi-jobs-container
-        image: syncfusion/boldbi-server-jobs:17.1.30
+        image: syncfusion/boldbi-server-jobs:17.2.16
         ports:
         - containerPort: 80
         resources:
@@ -619,7 +619,7 @@ spec:
           name: bi-dataservice-volume
       containers:
       - name: bi-dataservice-container
-        image: syncfusion/boldbi-designer:17.1.30
+        image: syncfusion/boldbi-designer:17.2.16
         ports:
         - containerPort: 80
         env:
