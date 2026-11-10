@@ -370,6 +370,49 @@ versions:
 ````
 > **NOTE:**  We need give a latest version of `idp` when you have latest version of Bold BI or Bold Reports version
 
+## Upgrade Center
+
+Upgrade Center is optional and disabled by default. Bold Common supports Helm deployment only. It provides product selection for Bold BI and Bold Reports within the shared Upgrade Center application.
+
+The default `IdpIntegrated` mode keeps the existing IDP configuration and UMS login workflow. Choose the mode based on the currently installed versions, not the target upgrade versions:
+
+| Product | IDP-integrated mode support | Earlier versions |
+| --- | --- | --- |
+| Bold BI | 16.3.5 and later; version 16.3.5 requires the `16.3.5_upgrade_center` application image tag. | Use `Standalone` mode. |
+| Bold Reports | 15.1.10 and later. | Use `Standalone` mode. |
+
+Common deployment uses one integration mode for both products and a shared IDP. If either product is below its supported starting version, or the shared IDP does not provide the required Upgrade Center integration, use `Standalone` mode and open `/upgrade-center` directly. Standalone mode changes configuration access and login, not which product you can select for upgrade.
+
+To use Standalone Mode, add this to your existing Common values file:
+
+```yaml
+upgradeCenter:
+  enabled: true
+  integrationMode: Standalone
+```
+
+Use an Upgrade Center image built with the latest Standalone support through the existing `upgradeCenter.image.repo` and `tag` settings. No additional Upgrade Center storage selector or duplicate connection settings are needed. The templates reuse the product's configured PV/PVC and storage settings; they do not probe storage providers.
+
+> **Important:** Bold Common requires a persistent volume (PV/PVC). Object storage (S3, Azure Blob, OCI) is not supported by the `bold-common` chart, so Standalone mode **cannot** be used without a PV. If `integrationMode: Standalone` is set without a configured `persistentVolume` (or `useExistingClaim` with `claimName`), `helm install/upgrade` stops with the error "Filesystem Standalone Upgrade Center requires the product App_Data PVC". `IdpIntegrated` mode is not affected.
+
+The Common product chart remains PVC-backed, so keep its existing `persistentVolume` configuration. Filesystem Standalone mounts that product PVC read-only; internal file paths stay in templates. This change does not introduce a non-PVC Common product deployment. Common supports Helm only.
+
+The application URL comes from `InternalAppUrls.Idp`; no separate URL is required. Object-storage mode also checks master database runtime settings for newer configuration. Access/decryption errors stop loading rather than using stale settings.
+
+Common retains its existing PVC-backed report/session-key storage. Playwright's temporary shared-state PVC and cleanup remain separate and unchanged. (The object-storage behavior described for Bold BI-only deployments in the Bold BI Upgrade Center guide does not apply to Bold Common.)
+
+By default, the shared administrator credentials come from `rootUserDetails.email` and `rootUserDetails.password`. Override them with `upgradeCenter.secret.adminUsername` and `adminPassword` when needed. They are stored in the existing Secret as `BOLD_ADMIN_USERNAME` and `BOLD_ADMIN_PASSWORD` and are used for local login and both products' Playwright validation. Do not add passwords to a ConfigMap.
+
+Apply the values using your existing Helm release name and namespace:
+
+```sh
+helm upgrade --install <release-name> ./helm/bold-common -n bold-services -f <common-values.yaml>
+```
+
+Use HTTPS, open `https://<your-domain>/upgrade-center`, and sign in with the configured administrator credentials. Product version/health checks and Playwright still require application access. Set `integrationMode: IdpIntegrated` to switch back. Mode changes roll the pod automatically. Restart `deployment/bold-upgrade-center` after changing mounted configuration or Secret credentials.
+
+Playwright image selection remains release-API driven. Its temporary shared state volume still requires a working default StorageClass and matching CSI driver. Standalone Mode does not change those existing settings.
+
 ## Load Balancing
 
 ### Ingress-Nginx

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bold-upgrade-center
+  namespace: bold-services
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: wait-for-idp-configuration
+          $patch: delete
+      containers:
+        - name: bold-upgrade-center
+          envFrom:
+            - secretRef:
+                name: azure-blob-storage-secret
+                optional: true
+            - secretRef:
+                name: oci-storage-secret
+                optional: true
+            - secretRef:
+                name: aws-s3-storage-secret
+                optional: true
+            - secretRef:
+                name: bold-upgrade-center-playwright
+          env:
+            - name: BOLD_SERVICES_PV_USED
+              value: "false"
+            - name: UpgradeCenter__Configuration__ConfigFilePath
+              $patch: delete
+            - name: UpgradeCenter__Configuration__PrivateKeyFilePath
+              $patch: delete
+          volumeMounts:
+            - name: product-app-data
+              $patch: delete
+            - name: upgrade-center-volume
+              $patch: delete
+      volumes:
+        - name: product-app-data
+          $patch: delete
+        - name: upgrade-center-volume
+          $patch: delete

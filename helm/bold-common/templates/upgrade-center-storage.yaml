@@ -1,0 +1,37 @@
+{{- if .Values.upgradeCenter.enabled }}
+{{- $storage := include "boldbi.upgradeCenter.storage" . | fromYaml }}
+{{- $hasRealPV := or
+    .Values.persistentVolume.useExistingClaim
+    (and (eq .Values.clusterProvider "onpremise")
+      (ne (default "" .Values.persistentVolume.onpremise.hostPath) ""))
+    (and (eq .Values.clusterProvider "aks")
+      (or (ne (default "" .Values.persistentVolume.aks.nfs.fileShareName) "")
+       (ne (default "" .Values.persistentVolume.aks.fileShareName) "")))
+    (and (eq .Values.clusterProvider "eks")
+      (ne (default "" .Values.persistentVolume.eks.efsFileSystemId) ""))
+    (and (eq .Values.clusterProvider "gke")
+      (and (ne (default "" .Values.persistentVolume.gke.fileShareIp) "")
+        (ne (default "" .Values.persistentVolume.gke.fileShareName) "")))
+    (and (eq .Values.clusterProvider "ack")
+      (ne (default "" .Values.persistentVolume.ack.serverName) ""))
+    (and (eq .Values.clusterProvider "oke")
+      (or (ne (default "" .Values.persistentVolume.oke.volumeHandle) "")
+       (and .Values.persistentVolume.oke.blockVolume.blockVolumeEnable
+         (ne (default "" .Values.persistentVolume.oke.blockVolume.blockVolumeCapacity) ""))))
+}}
+{{- if and (or (eq (lower (trim (default "IdpIntegrated" .Values.upgradeCenter.integrationMode))) "standalone") (not $hasRealPV)) (ne $storage.source "FileSystem") }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: bold-upgrade-center-storage
+{{ include "boldbi.namespace" . | indent 2 }}
+  labels:
+    app.kubernetes.io/name: bold-upgrade-center
+    app.kubernetes.io/instance: {{ .Release.Name }}
+type: Opaque
+stringData:
+  {{- range $name, $value := $storage.credentials }}
+  {{ $name }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}

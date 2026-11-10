@@ -27,6 +27,19 @@ spec:
   - bold-gateway
   {{- end }}
   http:
+  {{- if .Values.upgradeCenter.enabled }}
+  - match:
+    - uri:
+        prefix: /upgrade-center
+    route:
+    - destination:
+        port:
+          number: 80
+        host: bold-upgrade-center
+    retries:
+      attempts: 3
+      retryOn: gateway-error,connect-failure,refused-stream
+  {{- end }}
   - match:
     - uri:
         prefix: /reporting/reportservice

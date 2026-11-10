@@ -42,7 +42,13 @@ spec:
       {{- end }}
       {{- if $.Values.imagePullSecrets }}
       imagePullSecrets:
+      {{- if kindIs "string" $.Values.imagePullSecrets }}
       - name: {{ $.Values.imagePullSecrets }}
+      {{- else }}
+      {{- range $.Values.imagePullSecrets }}
+      - name: {{ if kindIs "map" . }}{{ .name }}{{ else }}{{ . }}{{ end }}
+      {{- end }}
+      {{- end }}
       {{- end }}
       containers:
       - name: {{ $service.app }}-container
@@ -96,6 +102,8 @@ spec:
         env:
         - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
           value: k8s
+        - name: BOLD_SERVICES_UPGRADE_CENTER_ENABLE
+          value: "{{ $.Values.upgradeCenter.enabled | default "false" }}"
         {{- if $.Values.optionalLibs }}
         - name: INSTALL_OPTIONAL_LIBS
           value: {{ $.Values.optionalLibs }}

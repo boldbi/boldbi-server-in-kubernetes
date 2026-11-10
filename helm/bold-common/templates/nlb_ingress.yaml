@@ -1556,6 +1556,27 @@ spec:
       http:
     {{- end }}
         paths:
+          {{- if $.Values.upgradeCenter.enabled }}
+          {{- if not .Values.subApplication.subPath }}
+          - path: /boldservices/upgrade-center(/|$)(.*)
+          {{- else }}
+          - path: /{{ $.Values.subApplication.subPath }}/upgrade-center(/|$)(.*)
+          {{- end }}
+            {{- if $ingressSupportsPathType }}
+            pathType: {{ $ingressPathType }}
+            {{- end }}
+            backend:
+              {{- if $ingressApiIsStable }}
+              service:
+                name: bold-upgrade-center
+                port:
+                  number: 80
+              {{- else }}
+              serviceName: bold-upgrade-center
+              servicePort: 80
+              {{- end }}
+          {{- end }}
+
           {{- if not .Values.subApplication.subPath }}
           - path: /boldservices
           {{- else }}
@@ -2635,6 +2656,23 @@ spec:
       http:
     {{- end }}
         paths:
+          {{- if $.Values.upgradeCenter.enabled }}
+          - path: /upgrade-center(/|$)(.*)
+            {{- if $ingressSupportsPathType }}
+            pathType: {{ $ingressPathType }}
+            {{- end }}
+            backend:
+              {{- if $ingressApiIsStable }}
+              service:
+                name: bold-upgrade-center
+                port:
+                  number: 80
+              {{- else }}
+              serviceName: bold-upgrade-center
+              servicePort: 80
+              {{- end }}
+          {{- end }}
+
           - path: /
             {{- if $ingressSupportsPathType }}
             pathType: {{ $ingressPathType }}
