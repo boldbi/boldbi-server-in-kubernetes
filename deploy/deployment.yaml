@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: id-web-container
-        image: syncfusion/bold-identity:17.1.30
+        image: syncfusion/bold-identity:17.2.16
         ports:
         - containerPort: 80
         resources:
@@ -78,7 +78,7 @@ spec:
           name: id-api-volume
       containers:
       - name: id-api-container
-        image: syncfusion/bold-identity-api:17.1.30
+        image: syncfusion/bold-identity-api:17.2.16
         ports:
         - containerPort: 80
         resources:
@@ -134,7 +134,7 @@ spec:
           name: id-ums-volume
       containers:
       - name: id-ums-container
-        image: syncfusion/bold-ums:17.1.30
+        image: syncfusion/bold-ums:17.2.16
         ports:
         - containerPort: 80
         resources:
@@ -204,7 +204,7 @@ spec:
           name: bi-web-volume
       containers:
       - name: bi-web-container
-        image: syncfusion/boldbi-server:17.1.30
+        image: syncfusion/boldbi-server:17.2.16
         ports:
         - containerPort: 80
         resources:
@@ -260,7 +260,7 @@ spec:
           name: bi-api-volume
       containers:
       - name: bi-api-container
-        image: syncfusion/boldbi-server-api:17.1.30
+        image: syncfusion/boldbi-server-api:17.2.16
         ports:
         - containerPort: 80
         resources:
@@ -316,7 +316,7 @@ spec:
           name: bi-jobs-volume
       containers:
       - name: bi-jobs-container
-        image: syncfusion/boldbi-server-jobs:17.1.30
+        image: syncfusion/boldbi-server-jobs:17.2.16
         ports:
         - containerPort: 80
         resources:
@@ -372,7 +372,7 @@ spec:
           name: bi-dataservice-volume
       containers:
       - name: bi-dataservice-container
-        image: syncfusion/boldbi-designer:17.1.30
+        image: syncfusion/boldbi-designer:17.2.16
         ports:
         - containerPort: 80
         env:
@@ -450,7 +450,7 @@ spec:
           name: bold-etl-volume
       containers:
       - name: bold-etl-container
-        image: syncfusion/bold-etl:17.1.30
+        image: syncfusion/bold-etl:17.2.16
         ports:
         - containerPort: 80
         env:
@@ -506,7 +506,7 @@ spec:
           name: bold-ai-volume
       containers:
       - name: bold-ai-container
-        image: syncfusion/bold-ai:17.1.30
+        image: syncfusion/bold-ai:17.2.16
         ports:
         - containerPort: 8080
         env:
@@ -562,7 +562,7 @@ spec:
           name: bold-mcp-volume
       containers:
       - name: bold-mcp-container
-        image: syncfusion/boldbi-mcp-server:17.1.30
+        image: syncfusion/boldbi-mcp-server:17.2.16
         ports:
         - containerPort: 80
         env:
