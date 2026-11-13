@@ -48,8 +48,61 @@ versions:
   bi: 17.2.16
   reports: 15.1.10
 
+# For OCI configuration, set enabled as true.
+ociStorage:
+  # Enable OCI storage backend (required: set to true to use OCI)
+  enabled: false
+  # OCI access key for authentication (e.g., your OCI user access key)
+  accessKey: ""
+  # Name of the OCI bucket to use for storage
+  bucketName: ""
+  # OCI namespace (tenant OCID or namespace name)
+  namespace: ""
+  # OCI region where the bucket is located (e.g., us-ashburn-1)
+  region: ""
+  # Root folder path within the bucket for storing data
+  rootFolderName: ""
+  # OCI secret key for authentication (e.g., your OCI user secret key)
+  secretKey: ""
+  # Type of OCI storage
+  storageType: 4
+
+# For Amazon S3 Bucket configuration, set enabled as true.
+s3Storage:
+  # Enable S3 storage backend (required: set to true to use S3)
+  enabled: false
+  # AWS access key ID for authentication (e.g., your IAM user access key ID)
+  accessKey: ""
+  # Name of the S3 bucket to use for storage
+  bucketName: ""
+  # AWS region where the bucket is located (e.g., us-east-1)
+  region: ""
+  # Root folder path within the bucket for storing data
+  rootFolderName: ""
+  # AWS secret access key for authentication (e.g., your IAM user secret access key)
+  secretKey: ""
+  # Type of S3 storage
+  storageType: 3
+
+# For Azure Blob Storage configuration, set enabled as true.
+azureStorage:
+  # Enable Azure Blob storage backend (required: set to true to use Azure)
+  enabled: false
+  # Azure Blob access key for authentication
+  accessKey: ""
+  # Azure Blob account name
+  accountName: ""
+  # Name of the Azure Blob container to use for storage
+  containerName: ""
+  # Azure Blob connection type (e.g., default, managedidentity)
+  connectionType: ""
+  # Azure Blob storage URI (e.g., for managed identity authentication)
+  storageUri: ""
+  # Type of Azure storage (set to 1 for Azure Blob)
+  storageType: 1
+
 loadBalancer:
-  type: nginx
+  type: traefik
   affinityCookie:
     enable: true
     affinityCookieExpiration: 600
