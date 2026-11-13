@@ -1,3 +1,23 @@
+{{- $hasRealPV := or
+    $.Values.persistentVolume.useExistingClaim
+    (and (eq $.Values.clusterProvider "onpremise")
+         (ne (default "" $.Values.persistentVolume.onpremise.hostPath) ""))
+    (and (eq $.Values.clusterProvider "aks")
+         (or (ne (default "" $.Values.persistentVolume.aks.nfs.fileShareName) "")
+             (ne (default "" $.Values.persistentVolume.aks.fileShareName) "")))
+    (and (eq $.Values.clusterProvider "eks")
+         (ne (default "" $.Values.persistentVolume.eks.efsFileSystemId) ""))
+    (and (eq $.Values.clusterProvider "gke")
+         (and (ne (default "" $.Values.persistentVolume.gke.fileShareIp) "")
+              (ne (default "" $.Values.persistentVolume.gke.fileShareName) "")))
+    (and (eq $.Values.clusterProvider "ack")
+         (ne (default "" $.Values.persistentVolume.ack.serverName) ""))
+    (and (eq $.Values.clusterProvider "oke")
+         (or (ne (default "" $.Values.persistentVolume.oke.volumeHandle) "")
+             (and $.Values.persistentVolume.oke.blockVolume.blockVolumeEnable
+                  (ne (default "" $.Values.persistentVolume.oke.blockVolume.blockVolumeCapacity) ""))))
+-}}
+{{- if $hasRealPV }}
 {{- if not .Values.persistentVolume.useExistingClaim }}
 {{- if or (eq .Values.clusterProvider "eks") (eq .Values.clusterProvider "onpremise") ( .Values.persistentVolume.aks.nfs.fileShareName ) (and .Values.persistentVolume.oke.blockVolume.blockVolumeEnable (not .Values.persistentVolume.oke.blockVolume.storageClassExists)) }}
 apiVersion: storage.k8s.io/v1
@@ -202,4 +222,5 @@ spec:
    matchLabels:
      alicloud-pvname: bold-fileserver
  {{- end }}
+{{- end }}
 {{- end }}

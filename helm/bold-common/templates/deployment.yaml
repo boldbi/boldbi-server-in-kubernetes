@@ -1,4 +1,26 @@
+{{- $isDev := default false $.Values.image.dev }}
+{{- $prefix := ternary "dev-" "" $isDev }}
 {{- range $service := .Values.instanceConfig}}
+{{- /* Define PV check ONCE here — reuse $hasRealPV everywhere */ -}}
+{{- $hasRealPV := or
+    $.Values.persistentVolume.useExistingClaim
+    (and (eq $.Values.clusterProvider "onpremise")
+         (ne (default "" $.Values.persistentVolume.onpremise.hostPath) ""))
+    (and (eq $.Values.clusterProvider "aks")
+         (or (ne (default "" $.Values.persistentVolume.aks.nfs.fileShareName) "")
+             (ne (default "" $.Values.persistentVolume.aks.fileShareName) "")))
+    (and (eq $.Values.clusterProvider "eks")
+         (ne (default "" $.Values.persistentVolume.eks.efsFileSystemId) ""))
+    (and (eq $.Values.clusterProvider "gke")
+         (and (ne (default "" $.Values.persistentVolume.gke.fileShareIp) "")
+              (ne (default "" $.Values.persistentVolume.gke.fileShareName) "")))
+    (and (eq $.Values.clusterProvider "ack")
+         (ne (default "" $.Values.persistentVolume.ack.serverName) ""))
+    (and (eq $.Values.clusterProvider "oke")
+         (or (ne (default "" $.Values.persistentVolume.oke.volumeHandle) "")
+             (and $.Values.persistentVolume.oke.blockVolume.blockVolumeEnable
+                  (ne (default "" $.Values.persistentVolume.oke.blockVolume.blockVolumeCapacity) ""))))
+-}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -35,10 +57,16 @@ spec:
       - name: id-web-initialization
         image: busybox:1.28
         command: ["/bin/sh","-c"]
+        {{- if and $hasRealPV (not ($.Values.ociStorage.enabled | default false)) (not ($.Values.s3Storage.enabled | default false)) (not ($.Values.azureStorage.enabled | default false)) }}
         args: ["while [ ! -f /application/app_data/configuration/config.json ] || [ ! -f /application/app_data/configuration/privatekeys.dat ]; do echo 'Waiting for required files...'; sleep 10; done; echo 'Both config.json and privatekeys.dat files exist.'"]
+        {{- else }}
+        args: ["echo 'Waiting for id-web service...'; while ! nc -z id-web-service 6000; do echo 'Still waiting...'; sleep 5; done; echo 'id-web is ready'"]
+        {{- end }}
+        {{- if $hasRealPV }}
         volumeMounts:
         - mountPath: /application/app_data
           name: {{ $service.app }}-volume
+        {{- end }}
       {{- end }}
       {{- if $.Values.imagePullSecrets }}
       imagePullSecrets:
@@ -98,19 +126,82 @@ spec:
           requests:
             cpu: {{ $service.cpuResourceRequests }}
             memory: {{ $service.memoryResourceRequests }}
-        {{- if ne $service.product "boldreports" }}
         env:
+        {{- if and (hasKey $.Values "ociStorage") (hasKey $.Values.ociStorage "enabled") ( $.Values.ociStorage.enabled | default false ) }}
+        - name: BOLD_SERVICES_OCI_ACCESS_KEY
+          value: "{{ $.Values.ociStorage.accessKey | default "" }}"
+        - name: OCI_ACCESS_KEY
+          value: "{{ $.Values.ociStorage.accessKey | default "" }}"
+        - name: BOLD_SERVICES_OCI_BUCKET_NAME
+          value: "{{ $.Values.ociStorage.bucketName | default "" }}"
+        - name: BOLD_SERVICES_OCI_NAME_SPACE
+          value: "{{ $.Values.ociStorage.namespace | default "" }}"
+        - name: BOLD_SERVICES_OCI_REGION
+          value: "{{ $.Values.ociStorage.region | default "" }}"
+        - name: OCI_REGION
+          value: "{{ $.Values.ociStorage.region | default "" }}"
+        - name: BOLD_SERVICES_OCI_ROOTFOLDER_NAME
+          value: "{{ $.Values.ociStorage.rootFolderName | default "" }}"
+        - name: BOLD_SERVICES_OCI_SECRET_KEY
+          value: "{{ $.Values.ociStorage.secretKey | default "" }}"
+        - name: OCI_SECRET_KEY
+          value: "{{ $.Values.ociStorage.secretKey | default "" }}"
+        - name: BOLD_SERVICES_STORAGETYPE
+          value: "{{ $.Values.ociStorage.storageType | default "" }}"
+        {{- end }}
+        {{- if and (hasKey $.Values "s3Storage") (hasKey $.Values.s3Storage "enabled") ( $.Values.s3Storage.enabled | default false ) }}
+        - name: BOLD_SERVICES_AWS_ACCESS_KEY_ID
+          value: "{{ $.Values.s3Storage.accessKey | default "" }}"
+        - name: BOLD_SERVICES_AMAZON_BUCKET_NAME
+          value: "{{ $.Values.s3Storage.bucketName | default "" }}"
+        - name: BOLD_SERVICES_AWS_REGION
+          value: "{{ $.Values.s3Storage.region | default "" }}"
+        - name: BOLD_SERVICES_AMAZON_ROOTFOLDER_NAME
+          value: "{{ $.Values.s3Storage.rootFolderName | default "" }}"
+        - name: BOLD_SERVICES_AWS_SECRET_ACCESS_KEY
+          value: "{{ $.Values.s3Storage.secretKey | default "" }}"
+        - name: BOLD_SERVICES_STORAGETYPE
+          value: "{{ $.Values.s3Storage.storageType | default "" }}"
+        {{- end }}
+        {{- if and (hasKey $.Values "azureStorage") (hasKey $.Values.azureStorage "enabled") ( $.Values.azureStorage.enabled | default false ) }}
+        - name: BOLD_SERVICES_AZUREBLOB_ACCESSKEY
+          value: "{{ $.Values.azureStorage.accessKey | default "" }}"
+        - name: BOLD_SERVICES_AZUREBLOB_ACCOUNT_NAME
+          value: "{{ $.Values.azureStorage.accountName | default "" }}"
+        - name: BOLD_SERVICES_AZUREBLOB_CONTAINER_NAME
+          value: "{{ $.Values.azureStorage.containerName | default "" }}"
+        - name: BOLD_SERVICES_AZUREBLOB_CONNECTION_TYPE
+          value: "{{ $.Values.azureStorage.connectionType | default "" }}"
+        - name: BOLD_SERVICES_AZUREBLOB_STORAGE_URI
+          value: "{{ $.Values.azureStorage.storageUri | default "" }}"
+        - name: BOLD_SERVICES_STORAGETYPE
+          value: "{{ $.Values.azureStorage.storageType | default "" }}"
+        {{- end }}
         - name: BOLD_SERVICES_HOSTING_ENVIRONMENT
           value: k8s
         - name: BOLD_SERVICES_UPGRADE_CENTER_ENABLE
           value: "{{ $.Values.upgradeCenter.enabled | default "false" }}"
+        {{- if eq $.Values.logging.output "console" }}
+        - name: BOLD_SERVICES_CONSOLE_LOG_ENABLED
+          value: "true"
+        {{- end }}
+        {{- if $hasRealPV }}
+        - name: BOLD_SERVICES_PV_USED
+          value: "true"
+        {{- else }}
+        - name: BOLD_SERVICES_PV_USED
+          value: "false"
         {{- if $.Values.optionalLibs }}
         - name: INSTALL_OPTIONAL_LIBS
           value: {{ $.Values.optionalLibs }}
         {{- end }}
-        {{- if eq $service.app "id-web" }}
+        {{- if and (eq $service.app "bold-etl") (eq $.Values.loadBalancer.type "alb") }}
+        - name: BOLD_SERVICES_LOAD_BALANCER
+          value: "ALB"
+        {{- end }}
         - name: APP_BASE_URL
           value: {{ $.Values.appBaseUrl }}
+        {{- if eq $service.app "id-web" }}
         - name: SUB_APP
           value: "{{ $.Values.subApplication.enabled }}"
         - name: ID_Version
@@ -187,8 +278,10 @@ spec:
         {{- end }}
         volumeMounts:
         {{- if or (eq $service.product "boldid") (eq $service.product "boldbi") }}
+        {{- if $hasRealPV }}
         - mountPath: /application/app_data
           name: {{ $service.app }}-volume
+        {{- end }}
         {{- if eq $service.app "id-web" }}
         - mountPath: /application/idp/web/logs/k8s
         {{- else if eq $service.app "id-api" }}
@@ -211,8 +304,10 @@ spec:
         - mountPath: /application/ai/mcpservice/logs/k8s
         {{- end }}
         {{- else if eq $service.product "boldreports" }}
+        {{- if $hasRealPV }}
         - mountPath: /application/app_data
           name: {{ $service.app }}-volume
+        {{- end }}
         {{- if eq $service.app "reports-web" }}
         - mountPath: /application/reporting/web/logs
         {{- else if eq $service.app "reports-api" }}
@@ -231,6 +326,7 @@ spec:
         {{- end }}
           name: log4net-config-volume
       volumes:
+      {{- if $hasRealPV }}
       - name: {{ $service.app }}-volume
         persistentVolumeClaim:
           {{- if $.Values.persistentVolume.useExistingClaim }}
@@ -239,6 +335,7 @@ spec:
           claimName: {{ printf "%s-claim" $.Values.persistentVolume.name }}
           {{- end }}
           readOnly: false
+      {{- end }}
       - name: log4net-config-volume
         configMap:
           name: log4net-config
