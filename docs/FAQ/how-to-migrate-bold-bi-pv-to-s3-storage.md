@@ -32,7 +32,7 @@ helm repo update
 If using an existing `values.yaml` file, update the image repository and tag with the latest values provided.
 
 - **Image Repo:** syncfusion
-- **Image Tag:** 17.2.16
+- **Image Tag:** 17.3.14
 
 ## 3. Update Logging Configuration
 Inside your `values.yaml`, update logging settings:
